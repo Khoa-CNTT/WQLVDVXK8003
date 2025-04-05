@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập Người Dùng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Background gradient */
+        body {
+            background: linear-gradient(to right, #36D1DC, #5B86E5);
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Container đăng nhập */
+        .login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            text-align: center;
+            animation: fadeIn 0.8s ease-in-out;
+            position: relative;
+        }
+
+        /* Animation fadeIn */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Input hiệu ứng focus */
+        .login-input {
+            border: 2px solid #ddd;
+            transition: all 0.3s ease-in-out;
+        }
+        .login-input:focus {
+            border-color: #36D1DC;
+            box-shadow: 0px 0px 10px rgba(54, 209, 220, 0.3);
+        }
+
+        /* Nút đăng nhập hover */
+        .login-button {
+            transition: all 0.3s ease-in-out;
+        }
+        .login-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Background hình xe khách */
+        .bus-image {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            animation: bounce 1.5s infinite alternate;
+        }
+
+        /* Hiệu ứng xe khách nhấp nhô */
+        @keyframes bounce {
+            from { transform: translateX(-50%) translateY(0); }
+            to { transform: translateX(-50%) translateY(10px); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <!-- Container đăng nhập -->
+    <div class="login-container relative">
+        <!-- Hình xe khách -->
+        <img src="https://cdn-icons-png.flaticon.com/512/1283/1283310.png" class="bus-image">
+
+        <h2 class="text-2xl font-bold text-gray-800 mt-10">🔑 Đăng Nhập</h2>
+        <p class="text-gray-500">Vui lòng nhập thông tin tài khoản</p>
+
+        <form id="loginForm" class="mt-6">
+            <div class="mb-4">
+                <input type="text" id="username" class="w-full p-3 border rounded-lg login-input" placeholder="👤 Tên đăng nhập" required>
+            </div>
+            <div class="mb-4">
+                <input type="password" id="password" class="w-full p-3 border rounded-lg login-input" placeholder="🔑 Mật khẩu" required>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold login-button">🔓 Đăng nhập</button>
+        </form>
+
+        <p id="errorMessage" class="text-red-600 mt-3 hidden">⚠️ Sai tài khoản hoặc mật khẩu!</p>
+        <p class="mt-4 text-center text-sm">Chưa có tài khoản? <a href="register.html" class="text-blue-600 font-bold">Đăng ký</a></p>
+    </div>
+
+    <!-- JavaScript xử lý đăng nhập -->
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            // Tài khoản User giả lập
+            const userAccounts = {
+                "user": "123456",
+                "khachhang": "654321"
+            };
+
+            // Lấy dữ liệu nhập vào
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+
+            // Kiểm tra đăng nhập
+            if (userAccounts[username] && userAccounts[username] === password) {
+                localStorage.setItem("isUserLoggedIn", "true");
+                window.location.href = "home.html"; // Chuyển đến trang chính của User
+            } else {
+                document.getElementById("errorMessage").classList.remove("hidden");
+            }
+        });
+    </script>
+
+</body>
+</html>
