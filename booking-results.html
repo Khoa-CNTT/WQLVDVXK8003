@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết Quả Tìm Kiếm - Phương Thanh Express</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        header {
+            background: linear-gradient(to right, #f97316, #ea580c);
+        }
+        .bus-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .bus-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .btn-modern {
+            transition: all 0.3s ease;
+            background: linear-gradient(to right, #f97316, #ea580c);
+        }
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="text-white py-4">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <h1 class="text-2xl font-bold">Phương Thanh Express</h1>
+            <a href="index.html" class="text-white hover:underline">Quay lại Trang Chủ</a>
+        </div>
+    </header>
+    
+    <!-- Kết quả tìm kiếm -->
+    <section class="container mx-auto my-8 px-4 text-center">
+        <h2 class="text-3xl font-bold text-orange-600">KẾT QUẢ TÌM KIẾM</h2>
+        <p class="text-lg text-gray-700 mt-2" id="search-info"></p>
+
+        <!-- Bộ lọc và sắp xếp -->
+        <div class="mt-4 flex flex-wrap justify-center space-x-4 gap-4">
+            <select id="filter-price" class="p-2 border rounded">
+                <option value="all">Tất cả giá vé</option>
+                <option value="below300">Dưới 300.000 VND</option>
+                <option value="above300">Trên 300.000 VND</option>
+            </select>
+            <select id="filter-seats" class="p-2 border rounded">
+                <option value="all">Tất cả số ghế</option>
+                <option value="available">Còn chỗ</option>
+                <option value="full">Hết chỗ</option>
+            </select>
+            <select id="filter-time" class="p-2 border rounded">
+                <option value="all">Tất cả khung giờ</option>
+                <option value="morning">Sáng (00:00 - 11:59)</option>
+                <option value="afternoon">Chiều (12:00 - 17:59)</option>
+                <option value="evening">Tối (18:00 - 23:59)</option>
+            </select>
+            <select id="sort-options" class="p-2 border rounded">
+                <option value="default">Sắp xếp mặc định</option>
+                <option value="price-asc">Giá thấp nhất</option>
+                <option value="price-desc">Giá cao nhất</option>
+                <option value="time-asc">Giờ sớm nhất</option>
+                <option value="seats-desc">Ghế còn nhiều nhất</option>
+            </select>
+            <button id="apply-filters" class="btn-modern text-white px-4 py-2 rounded">Lọc</button>
+        </div>
+
+        <div id="results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6"></div>
+        <div id="pagination" class="mt-6 flex justify-center space-x-4"></div>
+    </section>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const params = new URLSearchParams(window.location.search);
+            const departure = params.get("departure");
+            const destination = params.get("destination");
+            const date = params.get("date");
+
+            if (!departure || !destination || !date) {
+                document.getElementById("search-info").innerText = "Không có dữ liệu chuyến xe. Vui lòng quay lại trang chủ.";
+                return;
+            }
+
+            document.getElementById("search-info").innerText = `Tuyến đường: ${departure} → ${destination} | Ngày: ${date}`;
+
+            // Dữ liệu mẫu
+            const busData = [
+                { id: 1, name: "Phương Thanh Express", time: "06:00", price: 300000, seats: "available", remainingSeats: 10 },
+                { id: 2, name: "Xe Limousine Vip", time: "10:00", price: 350000, seats: "available", remainingSeats: 8 },
+                { id: 3, name: "Xe Giường Nằm Cao Cấp", time: "14:00", price: 280000, seats: "full", remainingSeats: 0 },
+                { id: 4, name: "Xe Khách Tiêu Chuẩn", time: "20:00", price: 250000, seats: "available", remainingSeats: 15 },
+                { id: 5, name: "Xe VIP Đà Nẵng", time: "07:30", price: 320000, seats: "available", remainingSeats: 12 },
+                { id: 6, name: "Phương Thanh Express", time: "06:00", price: 300000, seats: "available", remainingSeats: 10 },
+                { id: 7, name: "Xe Limousine Vip", time: "10:00", price: 350000, seats: "available", remainingSeats: 8 },
+                { id: 8, name: "Xe Giường Nằm Cao Cấp", time: "14:00", price: 280000, seats: "full", remainingSeats: 0 },
+                { id: 9, name: "Xe Tiêu Chuẩn", time: "20:00", price: 250000, seats: "available", remainingSeats: 15 },
+                { id: 10, name: "Xe VIP", time: "07:30", price: 320000, seats: "available", remainingSeats: 12 }
+            ];
+
+            const itemsPerPage = 6;
+            let currentPage = 1;
+            let filteredData = [...busData];
+
+            // Hàm đặt vé
+            window.bookTicket = function(busName, busTime, busPrice, seatCount) {
+                const totalPrice = seatCount * busPrice;
+                const url = `ticket-detail.html?busName=${encodeURIComponent(busName)}&busTime=${encodeURIComponent(busTime)}&busPrice=${encodeURIComponent(busPrice)}&seatCount=${encodeURIComponent(seatCount)}&totalPrice=${encodeURIComponent(totalPrice)}`;
+                window.location.href = url;
+            };
+
+            // Render danh sách xe
+            function renderResults(data) {
+                const resultsContainer = document.getElementById("results");
+                resultsContainer.innerHTML = "";
+
+                if (data.length === 0) {
+                    resultsContainer.innerHTML = `<p class="text-gray-700 text-lg">Không tìm thấy chuyến xe phù hợp. Vui lòng thử lại với bộ lọc khác!</p>`;
+                    document.getElementById("pagination").innerHTML = "";
+                    return;
+                }
+
+                const start = (currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const paginatedData = data.slice(start, end);
+
+                paginatedData.forEach(bus => {
+                    const busCard = `
+                        <div class="bus-card bg-white shadow-lg rounded-lg p-6">
+                            <h3 class="text-xl font-bold text-orange-600">${bus.name}</h3>
+                            <p class="text-gray-700">⏰ Giờ khởi hành: <strong>${bus.time}</strong></p>
+                            <p class="text-gray-700">💰 Giá vé: <strong>${bus.price.toLocaleString()} VND</strong></p>
+                            <p class="text-gray-700">🪑 Tình trạng ghế: <strong>${bus.seats === "available" ? `Còn chỗ (${bus.remainingSeats} chỗ trống)` : "Hết chỗ"}</strong></p>
+                            <label for="seat-count-${bus.id}" class="block mt-2 text-gray-700">Chọn số vé:</label>
+                            <input type="number" id="seat-count-${bus.id}" class="p-2 border rounded w-full" min="1" max="${bus.remainingSeats}" value="1" ${bus.seats === "full" ? "disabled" : ""}>
+                            <button class="mt-4 btn-modern text-white px-6 py-2 rounded" onclick="bookTicket('${bus.name}', '${bus.time}', ${bus.price}, document.getElementById('seat-count-${bus.id}').value)">Đặt vé ngay</button>
+                        </div>
+                    `;
+                    resultsContainer.innerHTML += busCard;
+                });
+
+                const totalPages = Math.ceil(data.length / itemsPerPage);
+                const paginationContainer = document.getElementById("pagination");
+                paginationContainer.innerHTML = `
+                    <button id="prevPage" class="btn-modern text-white px-4 py-2 rounded ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">Trang trước</button>
+                    <span class="text-gray-700">Trang ${currentPage} / ${totalPages}</span>
+                    <button id="nextPage" class="btn-modern text-white px-4 py-2 rounded ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">Trang sau</button>
+                `;
+
+                document.getElementById("prevPage").addEventListener("click", () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderResults(data);
+                    }
+                });
+
+                document.getElementById("nextPage").addEventListener("click", () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderResults(data);
+                    }
+                });
+            }
+
+            // Xử lý bộ lọc và sắp xếp
+            document.getElementById("apply-filters").addEventListener("click", applyFiltersAndSort);
+            document.getElementById("sort-options").addEventListener("change", applyFiltersAndSort);
+
+            function applyFiltersAndSort() {
+                const priceFilter = document.getElementById("filter-price").value;
+                const seatFilter = document.getElementById("filter-seats").value;
+                const timeFilter = document.getElementById("filter-time").value;
+                const sortValue = document.getElementById("sort-options").value;
+
+                filteredData = [...busData];
+
+                if (priceFilter === "below300") {
+                    filteredData = filteredData.filter(bus => bus.price < 300000);
+                } else if (priceFilter === "above300") {
+                    filteredData = filteredData.filter(bus => bus.price >= 300000);
+                }
+
+                if (seatFilter === "available") {
+                    filteredData = filteredData.filter(bus => bus.seats === "available");
+                } else if (seatFilter === "full") {
+                    filteredData = filteredData.filter(bus => bus.seats === "full");
+                }
+
+                if (timeFilter === "morning") {
+                    filteredData = filteredData.filter(bus => parseInt(bus.time.split(":")[0]) < 12);
+                } else if (timeFilter === "afternoon") {
+                    filteredData = filteredData.filter(bus => parseInt(bus.time.split(":")[0]) >= 12 && parseInt(bus.time.split(":")[0]) < 18);
+                } else if (timeFilter === "evening") {
+                    filteredData = filteredData.filter(bus => parseInt(bus.time.split(":")[0]) >= 18);
+                }
+
+                if (sortValue === "price-asc") {
+                    filteredData.sort((a, b) => a.price - b.price);
+                } else if (sortValue === "price-desc") {
+                    filteredData.sort((a, b) => b.price - a.price);
+                } else if (sortValue === "time-asc") {
+                    filteredData.sort((a, b) => a.time.localeCompare(b.time));
+                } else if (sortValue === "seats-desc") {
+                    filteredData.sort((a, b) => b.remainingSeats - a.remainingSeats);
+                }
+
+                currentPage = 1;
+                renderResults(filteredData);
+            }
+
+            renderResults(busData);
+        });
+    </script>
+</body>
+</html>
