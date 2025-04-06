@@ -1,70 +1,28 @@
-<<<<<<< HEAD
-# KLTN
-=======
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
->>>>>>> 68c90ea (API KLTN)
+Tổng Quan Dự án
+1. Giới thiệu Dự án "Xây dựng website quản lý và đặt vé xe khách tích hợp AI nhằm hỗ trợ giải đáp thông tin" là một hệ thống trực tuyến giúp tối ưu hóa quy trình đặt vé xe khách và nâng cao trải nghiệm khách hàng. Hệ thống không chỉ cung cấp chức năng đặt vé, quản lý chuyến đi, mà còn tích hợp AI để tư vấn và giải đáp thông tin nhanh chóng, giúp người dùng tiết kiệm thời gian và cải thiện dịch vụ.
+2. Mô tả dự án Hệ thống BusBookingAI là nền tảng đặt vé xe khách trực tuyến, hỗ trợ người dùng tìm kiếm tuyến xe phù hợp, đặt vé nhanh chóng và thanh toán dễ dàng. Bên cạnh đó, hệ thống còn tích hợp AI để hỗ trợ giải đáp thông tin, giúp nâng cao trải nghiệm người dùng. Các tính năng chính bao gồm:
+­	Đăng nhập, Đăng ký, Đăng xuất, Quên mật khẩu: Người dùng có thể tạo tài khoản, đăng nhập và khôi phục mật khẩu khi cần.
+­	Tìm kiếm chuyến xe: Hỗ trợ tìm kiếm tuyến xe theo điểm đi - điểm đến, ngày khởi hành.
+­	Đặt vé: Người dùng có thể chọn chỗ ngồi và đặt vé trực tuyến.
+­	Xem thông tin chi tiết của vé: Hiển thị đầy đủ thông tin vé đã đặt.
+­	Thanh toán trực tuyến: Hỗ trợ thanh toán bằng MOMO, VNPAY.
+­	Tra cứu thông tin bằng ChatBot: Hỗ trợ giải đáp thắc mắc về tuyến xe, giá vé, thời gian khởi hành.
+­	Xem danh sách vé đã đặt: Lưu trữ và hiển thị danh sách các vé đã mua.
+­	Xem báo cáo thống kê: Thống kê doanh thu, số lượng vé bán ra theo ngày, tháng.
+­	Quản lý tuyến đường: Cập nhật, chỉnh sửa thông tin các tuyến xe khách.
+­	Quản lý tài xế: Quản lý thông tin tài xế tham gia vận hành.
+­	Quản lý phương tiện: Cập nhật, quản lý danh sách phương tiện phục vụ vận chuyển.
+­	Quản lý chuyến xe: Điều phối chuyến đi, kiểm soát lịch trình.
+­	Quản lý khách hàng: Lưu trữ thông tin khách hàng, hỗ trợ dịch vụ khách hàng.
+­	Quản lý vé xe: Theo dõi trạng thái đặt vé, hủy vé, cập nhật thông tin vé.
+3. Phân quyền người dùng Hệ thống phân quyền người dùng thành ba nhóm chính:
+­	Khách vãng lai: Có thể tìm kiếm chuyến xe nhưng không thể đặt vé.
+­	Khách hàng: Có tài khoản đăng nhập, có thể đặt vé, thanh toán, tra cứu thông tin và quản lý lịch sử đặt vé.
+­	Admin: Quản lý toàn bộ hệ thống, bao gồm tuyến đường, tài xế, phương tiện, chuyến xe, khách hàng và báo cáo thống kê.
+4. Công nghệ sử dụng
+­	Backend: Laravel (PHP)
+­	Frontend: HTML, CSS, JavaScript
+­	Cơ sở dữ liệu: MySQL (phpMyAdmin)
+­	Thanh toán: MOMO, VNPAY
+­	AI Chatbot: OpenAI API
+5. Kết luận Dự án nhằm tối ưu hóa quy trình đặt vé, nâng cao trải nghiệm khách hàng và giúp doanh nghiệp vận tải quản lý hiệu quả hơn. Việc tích hợp AI chatbot giúp hỗ trợ người dùng nha
