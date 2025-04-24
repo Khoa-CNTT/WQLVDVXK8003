@@ -1,61 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Tổng Quan Dự Án "BusBookingAI"
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Giới thiệu
 
-## About Laravel
+"BusBookingAI" là hệ thống website tiên tiến kết hợp giữa quản lý và đặt vé xe khách với trí tuệ nhân tạo, nhằm cách mạng hóa trải nghiệm đặt vé và nâng cao chất lượng dịch vụ khách hàng trong ngành vận tải hành khách. Hệ thống không chỉ số hóa quy trình đặt vé truyền thống mà còn tích hợp công nghệ AI để tư vấn thông minh, giải đáp thắc mắc tức thời, và cá nhân hóa trải nghiệm người dùng.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tầm nhìn & Mục tiêu
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Dự án hướng đến việc giải quyết các vấn đề cốt lõi trong ngành vận tải hành khách:
+- Tối ưu hóa quy trình đặt vé, tiết kiệm thời gian và nguồn lực
+- Nâng cao trải nghiệm khách hàng thông qua giao diện trực quan và hỗ trợ thông minh
+- Tăng cường khả năng quản lý vận hành cho doanh nghiệp vận tải
+- Ứng dụng công nghệ AI để giải quyết các thách thức trong ngành
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Hệ thống chức năng
 
-## Learning Laravel
+### Phân hệ người dùng
+1. **Quản lý tài khoản**
+   - Đăng ký tài khoản với thông tin cá nhân
+   - Đăng nhập/đăng xuất an toàn
+   - Khôi phục mật khẩu thông qua xác thực
+   - Quản lý thông tin cá nhân
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+2. **Tìm kiếm & đặt vé**
+   - Tìm kiếm chuyến xe với bộ lọc thông minh (điểm đi, điểm đến, thời gian)
+   - Hiển thị trực quan sơ đồ ghế ngồi
+   - Chọn và đặt ghế theo sở thích
+   - Xem thông tin chi tiết mỗi chuyến (giờ khởi hành, giá vé, tiện nghi)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+3. **Thanh toán trực tuyến**
+   - Tích hợp đa dạng phương thức thanh toán (MOMO, VNPAY)
+   - Xử lý giao dịch an toàn, bảo mật
+   - Xác nhận thanh toán tự động
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+4. **Quản lý đặt vé**
+   - Theo dõi lịch sử đặt vé
+   - Truy xuất thông tin vé đã mua
+   - Tùy chọn hủy vé/đổi vé (tùy chính sách)
+   - Nhận thông báo về thay đổi lịch trình
 
-## Laravel Sponsors
+5. **Trợ lý ảo thông minh (ChatBot AI)**
+   - Giải đáp thông tin tuyến đường
+   - Tư vấn chọn chuyến phù hợp
+   - Hỗ trợ tra cứu giá vé, lịch trình
+   - Phản hồi thắc mắc 24/7
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Phân hệ quản trị
 
-### Premium Partners
+1. **Quản lý tuyến đường**
+   - Tạo và cập nhật thông tin tuyến mới
+   - Quản lý điểm đón/trả khách
+   - Thiết lập giá vé theo tuyến
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+2. **Quản lý vận hành**
+   - Quản lý thông tin tài xế (hồ sơ, giấy phép, đánh giá)
+   - Quản lý đội xe (phương tiện, bảo trì, trạng thái)
+   - Lập lịch và điều phối chuyến xe
 
-## Contributing
+3. **Quản lý khách hàng**
+   - Cơ sở dữ liệu khách hàng toàn diện
+   - Phân tích hành vi và sở thích
+   - Chăm sóc khách hàng cá nhân hóa
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. **Báo cáo & Thống kê**
+   - Báo cáo doanh thu (ngày/tuần/tháng)
+   - Thống kê tỷ lệ lấp đầy chỗ ngồi
+   - Phân tích hiệu suất theo tuyến
+   - Đánh giá dịch vụ từ khách hàng
 
-## Code of Conduct
+## Phân quyền hệ thống
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Khách vãng lai
+- Tìm kiếm và xem thông tin chuyến xe
+- Truy cập trợ lý ảo để giải đáp thông tin cơ bản
+- Đăng ký tài khoản mới
 
-## Security Vulnerabilities
+### Khách hàng (đã đăng nhập)
+- Toàn bộ quyền của khách vãng lai
+- Đặt vé và thanh toán trực tuyến
+- Quản lý lịch sử đặt vé cá nhân
+- Nhận ưu đãi và khuyến mãi cá nhân hóa
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Quản trị viên
+- Toàn quyền quản lý hệ thống
+- Điều chỉnh cấu hình và tham số hệ thống
+- Truy cập báo cáo và phân tích dữ liệu
+- Quản lý tuyến đường, phương tiện và nhân sự
 
-## License
+## Kiến trúc công nghệ
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Backend
+- **Framework**: Laravel (PHP) - Bảo mật cao, hiệu năng ổn định
+- **API**: RESTful API cho giao tiếp client-server
+
+### Frontend
+- **Giao diện**: HTML5, CSS3 (với framework responsive)
+- **Tương tác**: JavaScript (ES6+)
+- **Trải nghiệm**: Single Page Application
+
+### Cơ sở dữ liệu
+- **Hệ quản trị**: MySQL (với phpMyAdmin)
+- **Thiết kế**: Normalized Database với quan hệ tối ưu
+
+### Tích hợp & API
+- **Thanh toán**: VNPAY API
+- **AI Chatbot**: ClaudeAI API
+
+## Lợi ích dự án
+
+### Đối với khách hàng
+- Tiết kiệm thời gian với quy trình đặt vé trực tuyến đơn giản
+- Hỗ trợ thông tin 24/7 qua trợ lý ảo thông minh
+- Đa dạng lựa chọn và thanh toán linh hoạt
+- Trải nghiệm người dùng mượt mà, thân thiện
+
+### Đối với doanh nghiệp vận tải
+- Tối ưu hóa quy trình vận hành, giảm chi phí quản lý
+- Nâng cao khả năng tiếp cận khách hàng mới
+- Phân tích dữ liệu để đưa ra quyết định kinh doanh
+- Cải thiện chất lượng dịch vụ và độ hài lòng khách hàng
+
+## Kết luận
+
+Dự án "BusBookingAI" không chỉ đơn thuần là một website đặt vé, mà là giải pháp toàn diện nhằm chuyển đổi số cho ngành vận tải hành khách. Bằng cách kết hợp công nghệ AI với hệ thống quản lý thông minh, dự án hứa hẹn tạo ra bước đột phá trong trải nghiệm đặt vé xe khách, đồng thời nâng cao hiệu quả vận hành cho doanh nghiệp trong kỷ nguyên số.
