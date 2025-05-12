@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers\API;
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -10,7 +8,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
-
 class AuthController extends Controller
 {
     /**
@@ -50,7 +47,13 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Đăng ký tài khoản thành công',
             'data' => [
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role_id' => $user->role_id
+                ],
                 'access_token' => $token,
                 'token_type' => 'Bearer'
             ]
@@ -65,21 +68,52 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi xác thực dữ liệu',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Invalid credentials.'],
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Thông tin đăng nhập không chính xác'
+            ], 401);
         }
 
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Lấy thêm thông tin chi tiết từ user
+        $userDetail = User::with(['role'])->find($user->id);
+
         return response()->json([
-            'token' => $user->createToken('token')->plainTextToken
-        ]);
+            'success' => true,
+            'message' => 'Đăng nhập thành công',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role_id' => $user->role_id,
+                    'role' => $userDetail->role ?? null,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
+                ],
+                'access_token' => $token,
+                'token_type' => 'Bearer'
+            ]
+        ], 200);
     }
-
-
-
 
     /**
      * Đăng xuất khỏi hệ thống
@@ -161,5 +195,35 @@ class AuthController extends Controller
         return $status === Password::PASSWORD_RESET
             ? response()->json(['success' => true, 'message' => 'Đặt lại mật khẩu thành công'])
             : response()->json(['success' => false, 'message' => 'Không thể đặt lại mật khẩu'], 400);
+    }
+
+    /**
+     * Lấy thông tin người dùng hiện tại
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getCurrentUser(Request $request)
+    {
+        $user = $request->user();
+
+        // Lấy thêm thông tin liên quan
+        $userDetail = User::with(['role'])->find($user->id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role_id' => $user->role_id,
+                    'role' => $userDetail->role ?? null,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
+                ]
+            ]
+        ], 200);
     }
 }

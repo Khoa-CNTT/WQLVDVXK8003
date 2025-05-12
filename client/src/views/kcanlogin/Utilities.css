@@ -1,0 +1,342 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  }
+  
+  .utilities-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  /* Header */
+  .header {
+    background: linear-gradient(to right, #f97316, #ea580c);
+    color: white;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  
+  .header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  
+  
+  .nav-list {
+    display: flex;
+    gap: 2rem;
+  }
+  
+  .nav-link {
+    color: white;
+    transition: color 0.3s ease;
+  }
+  
+  .nav-link:hover {
+    color: #fed7aa;
+  }
+  
+  .nav-link.active {
+    font-weight: 700;
+  }
+  
+  /* Utilities Section */
+  .utilities-section {
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+  
+  .section-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #f97316, #ea580c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .section-description {
+    margin-top: 1rem;
+    font-size: 1.125rem;
+    color: #4b5563;
+  }
+  
+  .utilities-grid {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .utilities-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  
+  .card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .utility-image {
+    width: 100%;
+    height: 12rem;
+    object-fit: cover;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .utility-image:hover {
+    transform: scale(1.05);
+  }
+  
+  .card-title {
+    margin-top: 1rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #ea580c;
+  }
+  
+  .card-description {
+    margin-top: 0.5rem;
+    color: #4b5563;
+  }
+  
+  /* Support Section */
+  .support-section {
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+  
+  .support-buttons {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .btn-modern {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    color: white;
+    background: linear-gradient(to right, #f97316, #ea580c);
+    transition: all 0.3s ease;
+  }
+  
+  .btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+  }
+  
+  /* Chatbot */
+  .chatbot {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 20rem;
+    background-color: white;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+  }
+  
+  .chatbot.hidden {
+    display: none;
+  }
+  
+  .chatbot-header {
+    background: linear-gradient(to right, #f97316, #ea580c);
+    color: white;
+    padding: 1rem;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .chatbot-title {
+    font-weight: 700;
+  }
+  
+  .chatbot-close {
+    color: white;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .chatbot-close:hover {
+    color: #fed7aa;
+  }
+  
+  .chatbot-messages {
+    padding: 1rem;
+    height: 16rem;
+    overflow-y: auto;
+    background-color: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .message {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .user-message {
+    align-self: flex-end;
+    background-color: #fed7aa;
+  }
+  
+  .bot-message {
+    align-self: flex-start;
+    background-color: #e5e7eb;
+  }
+  
+  .chatbot-input {
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .input-field {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+  }
+  
+  .input-field:focus {
+    outline: none;
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+  }
+  
+  .chatbot-toggle {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    background: linear-gradient(to right, #f97316, #ea580c);
+    color: white;
+    padding: 1rem;
+    border-radius: 9999px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .chatbot-toggle:hover {
+    box-shadow: 0 6px 12px rgba(249, 115, 22, 0.4);
+  }
+  
+  /* Footer */
+  .footer {
+    background: linear-gradient(to right, #f97316, #ea580c);
+    color: white;
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+  
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 2rem;
+  }
+  
+  @media (min-width: 768px) {
+    .footer-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  
+  .footer-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+  
+  .social-links {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1.5rem;
+  }
+  
+  .social-icon {
+    color: white;
+    font-size: 1.5rem;
+    transition: color 0.3s ease;
+  }
+  
+  .social-icon:hover {
+    color: #fed7aa   color  #fed7aa;
+  }
+  
+  .footer-links {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .footer-link {
+    color: white;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-link:hover {
+    color: #fed7aa;
+  }
+  
+  .payment-methods {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .payment-icon {
+    width: 4rem;
+  }
+  
+  .contact-info {
+    margin-top: 0.5rem;
+  }
+  
+  .footer-bottom {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #fb923c;
+    text-align: center;
+  }
