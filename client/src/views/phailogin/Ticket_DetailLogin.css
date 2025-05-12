@@ -1,0 +1,377 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* Base Styles */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.ticket-detail {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header Styles */
+header {
+  background: linear-gradient(to right, #f97316, #ea580c);
+  color: white;
+  padding: 1rem 0;
+}
+
+header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.back-link {
+  color: white;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* Main Content Styles */
+section.container {
+  flex: 1;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+section h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #f97316;
+  margin-bottom: 1.5rem;
+}
+
+.loading {
+  margin-top: 2rem;
+  text-align: center;
+  color: #4b5563;
+}
+
+/* Booking Content Styles */
+.booking-content {
+  margin-top: 1.5rem;
+  background-color: white;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.booking-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f97316;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.booking-content .bus-info {
+  color: #4b5563;
+  margin-top: 0.5rem;
+}
+
+.booking-content .total-price {
+  color: #4b5563;
+  font-weight: bold;
+  margin-top: 0.5rem;
+}
+
+/* Seat Map Styles */
+.seat-map {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.seat {
+  width: 40px;
+  height: 40px;
+  margin: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.seat.available {
+  background-color: #e5e7eb;
+}
+
+.seat.selected {
+  background-color: #f97316;
+  color: white;
+  border-color: #ea580c;
+}
+
+.seat.taken {
+  background-color: #d1d5db;
+  border-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.selected-seats {
+  color: #4b5563;
+  margin-top: 0.5rem;
+}
+
+/* Form Styles */
+form {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+/* Button Styles */
+.btn-modern {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(to right, #f97316, #ea580c);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+}
+
+.btn-modern.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-modern.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: #e5e7eb;
+  color: #4b5563;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background-color: #d1d5db;
+}
+
+/* Login Reminder */
+.login-reminder {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #fff9db;
+  border-radius: 0.5rem;
+  color: #b45309;
+}
+
+.login-reminder a {
+  color: #f97316;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-reminder a:hover {
+  text-decoration: underline;
+}
+
+/* Booking Result */
+.booking-result {
+  margin-top: 1rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.booking-result.success {
+  color: #16a34a;
+}
+
+.booking-result.error {
+  color: #dc2626;
+}
+
+/* Success Modal */
+.success-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  z-index: 10;
+  max-width: 28rem;
+  width: 100%;
+}
+
+.modal-body {
+  text-align: center;
+}
+
+.success-icon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1rem;
+  color: #16a34a;
+}
+
+.modal-body h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.modal-body p {
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+}
+
+.booking-code {
+  font-weight: bold;
+  font-size: 1.125rem;
+  color: #f97316;
+  margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  border-radius: 5px;
+  color: white;
+  transform: translateX(150%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification.success {
+  background-color: #28a745;
+}
+
+.notification.error {
+  background-color: #dc3545;
+}
+
+/* Responsive Styles */
+@media (max-width: 640px) {
+  .booking-content {
+    padding: 1.5rem;
+  }
+  
+  .modal-content {
+    margin: 0 1rem;
+    padding: 1.5rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .seat {
+    width: 35px;
+    height: 35px;
+    margin: 4px;
+  }
+}

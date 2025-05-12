@@ -1,0 +1,261 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  line-height: 1.6;
+}
+
+.booking-results {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header Styles */
+header {
+  background: linear-gradient(to right, #f97316, #ea580c);
+  color: white;
+  padding: 1rem 0;
+}
+
+header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.back-link {
+  color: white;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* Main Content Styles */
+section.container {
+  flex: 1;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+section h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #f97316;
+  margin-bottom: 0.5rem;
+}
+
+.search-info {
+  font-size: 1.125rem;
+  color: #4b5563;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Filters and Sorting */
+.filters-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-select {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Loading State */
+.loading {
+  margin-top: 2rem;
+  text-align: center;
+  color: #4b5563;
+}
+
+/* No Results State */
+.no-results {
+  margin-top: 2rem;
+  text-align: center;
+  color: #4b5563;
+}
+
+.no-results p {
+  margin-bottom: 1rem;
+}
+
+/* Results Grid */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Bus Card */
+.bus-card {
+  background-color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bus-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.bus-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f97316;
+  margin-bottom: 0.75rem;
+}
+
+.bus-card p {
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+.bus-card .amenities {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+.status-available {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.status-limited {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status-full {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Button Styles */
+.btn-modern {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  margin-top: 1rem;
+  background: linear-gradient(to right, #f97316, #ea580c);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  width: 100%;
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+}
+
+.btn-modern.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-modern.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.pagination .btn-modern {
+  width: auto;
+}
+
+.page-info {
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  border-radius: 5px;
+  color: white;
+  transform: translateX(150%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification.success {
+  background-color: #28a745;
+}
+
+.notification.error {
+  background-color: #dc3545;
+}
