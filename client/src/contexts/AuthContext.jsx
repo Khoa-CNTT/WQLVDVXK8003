@@ -98,81 +98,53 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password, redirectUrl = '/home') => {
-    try {
-      // Xóa query logout nếu tồn tại
-      if (window.location.search.includes('logout=true')) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      let fullAuthData;
-      try {
-        const response = await axios.post('http://127.0.0.1:8000/api/v1/login', {
-          email,
-          password,
-        });
-
-        const { success, message, data } = response.data;
-        fullAuthData = {
-          success,
-          message,
-          data: {
-            user: data.user,
-            access_token: data.access_token,
-            token_type: data.token_type,
-            refresh_token: data.refresh_token, // Giả sử backend trả về refresh_token
-          },
-        };
-      } catch (apiError) {
-        console.log('API failed, using mock data for test');
-        const userName = email.split('@')[0];
-        const formattedName = userName
-          .split('.')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-
-        fullAuthData = {
-          success: true,
-          message: 'Login successful',
-          data: {
-            user: {
-              id: 1,
-              name: formattedName,
-              email,
-              role_id: email.includes('admin') ? 1 : 2,
-            },
-            access_token: 'mock_token_' + Date.now(),
-            token_type: 'Bearer',
-            refresh_token: 'mock_refresh_token_' + Date.now(),
-          },
-        };
-      }
-
-      localStorage.setItem('authData', JSON.stringify(fullAuthData));
-      localStorage.setItem('userInfo', JSON.stringify(fullAuthData.data.user));
-      setAuthData(fullAuthData);
-
-      let targetUrl = '/home';
-
-      if (fullAuthData.data.user.role_id === 1) {
-        targetUrl = '/dashboard';
-      } else if (redirectUrl && redirectUrl.includes('/ticket-detail') && redirectUrl.includes('?')) {
-        const query = redirectUrl.substring(redirectUrl.indexOf('?'));
-        targetUrl = '/ticket-detailLogin' + query;
-      } else if (redirectUrl && redirectUrl !== '/home' && redirectUrl !== '/') {
-        targetUrl = redirectUrl;
-      }
-
-      navigate(targetUrl, { replace: true });
-      return { success: true, data: fullAuthData };
-    } catch (error) {
-      console.error('Login error:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Login failed',
-        error: error.response?.data,
-      };
+  try {
+    // Xoá query logout nếu có
+    if (window.location.search.includes('logout=true')) {
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
-  };
+
+    // Gọi API đăng nhập
+    const { data: response } = await axios.post('http://127.0.0.1:8000/api/v1/login', {
+      email,
+      password,
+    });
+
+    const { success, message, data } = response;
+
+    if (!success) {
+      throw new Error(message || 'Login failed');
+    }
+
+    // Lưu vào localStorage
+    localStorage.setItem('authData', JSON.stringify(response));
+    localStorage.setItem('userInfo', JSON.stringify(data.user));
+    setAuthData(response);
+
+    // Xác định trang chuyển đến sau đăng nhập
+    let targetUrl = '/home';
+
+    if (data.user.role_id === 1) {
+      targetUrl = '/dashboard';
+    } else if (redirectUrl.includes('/ticket-detail') && redirectUrl.includes('?')) {
+      const query = redirectUrl.substring(redirectUrl.indexOf('?'));
+      targetUrl = '/ticket-detailLogin' + query;
+    } else if (redirectUrl && redirectUrl !== '/home' && redirectUrl !== '/') {
+      targetUrl = redirectUrl;
+    }
+
+    navigate(targetUrl, { replace: true });
+    return { success: true, data: response };
+  } catch (error) {
+    console.error('Login error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Login failed',
+      error: error.response?.data,
+    };
+  }
+};
+
 
   const register = async userData => {
     try {
