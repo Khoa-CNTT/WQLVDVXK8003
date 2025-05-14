@@ -1,25 +1,24 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './contexts/ProtectedRoute';
-import Login from './views/Login';
-import Register from './views/Resgiter';
-import Home from './views/phailogin/Home';
-import Admin from './views/phailogin/Admin/Dashboard';
-import TicketCrud from './views/phailogin/Admin/TicketCrud';
-import Vehicles from './views/phailogin/Admin/Vehicles';
-import Introductions from './views/kcanlogin/Introductions';
-import BookingResults from './views/kcanlogin/BookingResults';
-import Ticket_Detail from './views/kcanlogin/Ticket_detail';
-import MyBooking from './views/kcanlogin/MyBooking';
-import Utilities from './views/kcanlogin/Utilities';
-import Security from './views/kcanlogin/Security';
-import Profile from './views/phailogin/Profile';
-import MyBookingLogin from './views/phailogin/MyBookingLogin';
-import BookingResultsLogin from './views/phailogin/BookingResultsLogin';
-import Ticket_DetailLogin from './views/phailogin/Ticket_DetailLogin';
-import UtilitiesLogin from './views/phailogin/UtilitiesLogin';
-import SecurityLogin from './views/phailogin/SecurityLogin';
-import Dashboard from './views/phailogin/Admin/Dashboard';
+import Login from './pages/Login';
+import Register from './pages/Resgiter';
+import Home from './pages/user/Home';
+import TicketCrud from './pages/user/Admin/TicketCrud';
+import Vehicles from './pages/user/Admin/Vehicles';
+import Introductions from './pages/guest/Introductions';
+import BookingResults from './pages/guest/BookingResults';
+import Ticket_Detail from './pages/guest/Ticket_detail';
+import MyBooking from './pages/guest/MyBooking';
+import Utilities from './pages/guest/Utilities';
+import Security from './pages/guest/Security';
+import Profile from './pages/user/Profile';
+import MyBookingLogin from './pages/user/MyBookingLogin';
+import BookingResultsLogin from './pages/user/BookingResultsLogin';
+import Ticket_DetailLogin from './pages/user/Ticket_DetailLogin';
+import UtilitiesLogin from './pages/user/UtilitiesLogin';
+import SecurityLogin from './pages/user/SecurityLogin';
+import Dashboard from './pages/user/Admin/Dashboard';
 
 const App = () => {
   return (

@@ -1,1 +1,3 @@
 *.sqlite*
+server/database/database.sqlite
+
