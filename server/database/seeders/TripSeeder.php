@@ -50,7 +50,9 @@ class TripSeeder extends Seeder
                     $arrivalDateTime = $departureDateTime->copy()->addMinutes($route->duration);
 
                     // Tạo trip code
-                    $tripCode = 'TP' . time() . rand(1000, 9999);
+                    do {
+                        $tripCode = 'TP' . now()->format('YmdHis') . rand(100, 999);
+                    } while (Trip::where('trip_code', $tripCode)->exists());
 
                     // Dao động giá 10%
                     $priceVariation = rand(-10, 10) / 100; // -10% to +10%
