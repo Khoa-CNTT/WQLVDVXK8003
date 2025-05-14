@@ -3,6 +3,7 @@ import TicketCrud from '../pages/user/Admin/TicketCrud';
 import Vehicles from '../pages/user/Admin/Vehicles';
 import { Trips } from '../pages/user/Admin/Trips';
 import { ProtectedRoute } from '../contexts/ProtectedRoute';
+import Line from '../pages/user/Admin/line';
 
 const adminRoutes = [
   {
@@ -34,6 +35,14 @@ const adminRoutes = [
     element: (
       <ProtectedRoute requiredRole={1}>
         <Trips />
+      </ProtectedRoute>
+    ),
+  },
+    {
+    path: '/line',
+    element: (
+      <ProtectedRoute requiredRole={1}>
+        <Line />
       </ProtectedRoute>
     ),
   },

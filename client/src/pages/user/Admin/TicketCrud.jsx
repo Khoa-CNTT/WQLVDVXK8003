@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './TicketCrud.css';
+import HomeAdminLayout from '../../../layouts/AdminLayout';
 
 const TicketCrud = () => {
     const [currentDateTime, setCurrentDateTime] = useState('');
@@ -306,15 +307,6 @@ const TicketCrud = () => {
         }
     };
     
-    // Hàm đăng xuất
-    const handleLogout = () => {
-        if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
-            localStorage.removeItem('authData');
-            localStorage.removeItem('userInfo');
-            window.location.href = '/login';
-        }
-    };
-    
     // Chuyển đổi trạng thái vé thành tiếng Việt
     const translateStatus = (status) => {
         const statusMap = {
@@ -333,75 +325,10 @@ const TicketCrud = () => {
     };
 
     return (
+        <HomeAdminLayout>
+
         <div className="app-container">
-            {/* Sidebar */}
-            <aside className="sidebar">
-                <div className="company-name">
-                    <h1>Phương Thanh Express</h1>
-                </div>
-                <nav className="menu">
-                    <Link to="/dashboard" className="menu-item">
-                        <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        <span>Thống kê</span>
-                    </Link>
-                    <Link to="/tickets" className="menu-item active">
-                        <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
-                        </svg>
-                        <span>Vé xe</span>
-                    </Link>
-                    <Link to="/vehicles" className="menu-item">
-                        <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                        </svg>
-                        <span>Phương tiện</span>
-                    </Link>
-                    <Link to="/routes" className="menu-item">
-                        <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span>Tuyến đường</span>
-                    </Link>
-                    <Link to="/trips" className="menu-item">
-                        <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a2 2 0 012-2h2a2 2 0 012 2v5m-4 0h4"></path>
-                        </svg>
-                        <span>Chuyến xe</span>
-                    </Link>
-                    <Link to="/drivers" className="menu-item">
-                        <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        <span>Tài xế</span>
-                    </Link>
-                    <Link to="/customers" className="menu-item">
-                        <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <span>Khách Hàng</span>
-                    </Link>
-                    <Link to="/amenities" className="menu-item">
-                        <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span>Tiện Ích</span>
-                    </Link>
-                </nav>
-            </aside>
-
             {/* Nội dung chính */}
-            <main className="main-content">
-                {/* Header */}
-                <header className="top-header">
-                    <div className="date-time">{currentDateTime}</div>
-                    <div className="user-section">
-                        <span className="user-email">admin@phuongthanh.com</span>
-                        <button className="logout-btn" onClick={handleLogout}>Đăng Xuất</button>
-                    </div>
-                </header>
-
                 {/* Danh sách vé xe */}
                 <div className="ticket-container">
                     <h1 className="page-title">Danh Sách Vé Xe</h1>
@@ -471,8 +398,6 @@ const TicketCrud = () => {
                         </table>
                     )}
                 </div>
-            </main>
-
             {/* Modal cho Thêm/Sửa vé xe */}
             {showModal && (
                 <div className="modal">
@@ -546,6 +471,8 @@ const TicketCrud = () => {
                 </div>
             )}
         </div>
+        </HomeAdminLayout>
+
     );
 };
 
