@@ -326,10 +326,8 @@ const TicketCrud = () => {
 
     return (
         <HomeAdminLayout>
-
             <div className="app-container">
                 {/* Nội dung chính */}
-                {/* Danh sách vé xe */}
                 <div className="ticket-container">
                     <h1 className="page-title">Danh Sách Vé Xe</h1>
 
