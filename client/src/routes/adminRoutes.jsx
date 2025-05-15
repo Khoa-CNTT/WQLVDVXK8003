@@ -4,9 +4,9 @@ import Vehicles from '../pages/user/Admin/Vehicles';
 import { Trips } from '../pages/user/Admin/Trips';
 import { ProtectedRoute } from '../contexts/ProtectedRoute';
 import Line from '../pages/user/Admin/line';
-import { Drivers } from '../pages/user/Admin/Drivers';
 import Customers from '../pages/user/Admin/Customers';
 import Amenities from '../pages/user/Admin/Amenities';
+import Drivers from '../pages/user/Admin/Drivers';
 
 const adminRoutes = [
   {
