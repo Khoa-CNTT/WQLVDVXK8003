@@ -4,6 +4,9 @@ import Vehicles from '../pages/user/Admin/Vehicles';
 import { Trips } from '../pages/user/Admin/Trips';
 import { ProtectedRoute } from '../contexts/ProtectedRoute';
 import Line from '../pages/user/Admin/line';
+import { Drivers } from '../pages/user/Admin/Drivers';
+import Customers from '../pages/user/Admin/Customers';
+import Amenities from '../pages/user/Admin/Amenities';
 
 const adminRoutes = [
   {
@@ -46,6 +49,31 @@ const adminRoutes = [
       </ProtectedRoute>
     ),
   },
+  {
+    path: '/customers',
+    element: (
+      <ProtectedRoute requiredRole={1}>
+        <Customers />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/amenities',
+    element: (
+      <ProtectedRoute requiredRole={1}>
+        <Amenities />
+      </ProtectedRoute>
+    ),
+  },
+    {
+    path: '/drivers',
+    element: (
+      <ProtectedRoute requiredRole={1}>
+        <Drivers />
+      </ProtectedRoute>
+    ),
+  },
+  
 ];
 
 export default adminRoutes;
