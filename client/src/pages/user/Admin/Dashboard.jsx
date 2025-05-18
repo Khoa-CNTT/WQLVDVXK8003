@@ -145,15 +145,6 @@ const Dashboard = () => {
         fetchDashboardData();
     }, []);
 
-    // Hàm đăng xuất
-    const handleLogout = () => {
-        if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
-            localStorage.removeItem('authData');
-            localStorage.removeItem('userInfo');
-            window.location.href = '/login';
-        }
-    };
-
     // Tùy chọn biểu đồ cột
     const barOptions = {
         scales: {
@@ -191,8 +182,6 @@ const Dashboard = () => {
 
     return (
         <HomeAdminLayout>
-
-            <div className="dashboard-container">
                 {/* Nội dung Dashboard */}
                 <div className="dashboard-content">
                     <h2 className="section-title">Thống Kê</h2>
@@ -248,7 +237,6 @@ const Dashboard = () => {
                         </>
                     )}
                 </div>
-            </div>
         </HomeAdminLayout>
 
     );

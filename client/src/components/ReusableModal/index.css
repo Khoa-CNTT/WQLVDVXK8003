@@ -33,6 +33,10 @@ body {
     max-width: 500px;
     border-radius: 8px;
     padding: 24px;
+
+    /* ===== MỚI: Giới hạn chiều cao modal và cho phép scroll khi nội dung dài ===== */
+    max-height: 80vh;      /* Giới hạn chiều cao tối đa modal */
+    overflow-y: auto;      /* Cho phép cuộn dọc khi nội dung vượt */
 }
 
 .modal-title {
@@ -45,7 +49,21 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    max-height: 60vh;
+    overflow-y: auto;
 }
+
+/* Tuỳ chọn nếu muốn chia input thành 2 cột */
+/*
+.form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.form-row .form-input {
+    flex: 1;
+}
+*/
 
 .form-input {
     padding: 10px 12px;

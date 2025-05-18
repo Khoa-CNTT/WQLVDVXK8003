@@ -1,141 +1,10 @@
 import React, { useState } from 'react';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
 import Table from '../../../components/ReusableTable/Table';
+import ReusableModal from '../../../components/ReusableModal/ReusableModal';
 
 const Vehicles = () => {
-    // // Mock vehicle data
-    // const [vehicles, setVehicles] = useState([
-    //     { id: 1, plate: "51B-12345", type: "Xe khách", seats: 45, year: 2018, status: "Hoạt động" },
-    //     { id: 2, plate: "51B-67890", type: "Xe giường nằm", seats: 40, year: 2020, status: "Bảo trì" },
-    //     { id: 3, plate: "51B-54321", type: "Xe khách", seats: 50, year: 2019, status: "Hoạt động" }
-    // ]);
-
-    // const [currentTime, setCurrentTime] = useState('');
-    // const [currentDate, setCurrentDate] = useState('');
-    // const [showModal, setShowModal] = useState(false);
-    // const [editingVehicleId, setEditingVehicleId] = useState(null);
-
-    // // Form state
-    // const [vehiclePlate, setVehiclePlate] = useState('');
-    // const [vehicleType, setVehicleType] = useState('');
-    // const [vehicleSeats, setVehicleSeats] = useState('');
-    // const [vehicleYear, setVehicleYear] = useState('');
-    // const [vehicleStatus, setVehicleStatus] = useState('');
-
-    // // Action log data (loaded from localStorage or initialized)
-    // const [actionLog, setActionLog] = useState(() => {
-    //     const savedLog = localStorage.getItem('actionLog');
-    //     return savedLog ? JSON.parse(savedLog) : [];
-    // });
-
-    // // Update time regularly
-    // useEffect(() => {
-    //     const updateTime = () => {
-    //         const now = new Date();
-    //         const date = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    //         const time = now.toLocaleTimeString('vi-VN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    //         setCurrentDate(date);
-    //         setCurrentTime(time);
-    //     };
-
-    //     updateTime();
-    //     const interval = setInterval(updateTime, 1000);
-    //     return () => clearInterval(interval);
-    // }, []);
-
-    // const openAddVehicleModal = () => {
-    //     setEditingVehicleId(null);
-    //     resetForm();
-    //     setShowModal(true);
-    // };
-
-    // const resetForm = () => {
-    //     setVehiclePlate('');
-    //     setVehicleType('');
-    //     setVehicleSeats('');
-    //     setVehicleYear('');
-    //     setVehicleStatus('');
-    // };
-
-    // const editVehicle = (id) => {
-    //     const vehicle = vehicles.find(v => v.id === id);
-    //     if (vehicle) {
-    //         setEditingVehicleId(id);
-    //         setVehiclePlate(vehicle.plate);
-    //         setVehicleType(vehicle.type);
-    //         setVehicleSeats(vehicle.seats.toString());
-    //         setVehicleYear(vehicle.year.toString());
-    //         setVehicleStatus(vehicle.status);
-    //         setShowModal(true);
-    //     }
-    // };
-
-    // const saveVehicle = () => {
-    //     const plate = vehiclePlate.trim();
-    //     const type = vehicleType.trim();
-    //     const seats = parseInt(vehicleSeats);
-    //     const year = parseInt(vehicleYear);
-    //     const status = vehicleStatus;
-
-    //     if (!plate || !type || !seats || !year || !status) {
-    //         alert('Vui lòng điền đầy đủ thông tin!');
-    //         return;
-    //     }
-
-    //     if (!/^\d{2}[A-Z]-[0-9]{5}$/.test(plate)) {
-    //         alert('Biển số xe không hợp lệ! Vui lòng nhập theo định dạng: 51B-12345');
-    //         return;
-    //     }
-
-    //     if (seats <= 0) {
-    //         alert('Số ghế phải lớn hơn 0!');
-    //         return;
-    //     }
-
-    //     if (year < 1900 || year > new Date().getFullYear()) {
-    //         alert(`Năm sản xuất phải nằm trong khoảng 1900 đến ${new Date().getFullYear()}!`);
-    //         return;
-    //     }
-
-    //     if (editingVehicleId) {
-    //         setVehicles(vehicles.map(v => 
-    //             v.id === editingVehicleId 
-    //                 ? { ...v, plate, type, seats, year, status } 
-    //                 : v
-    //         ));
-    //         logAction('Sửa phương tiện', `ID: ${editingVehicleId}, Biển số: ${plate}`);
-    //     } else {
-    //         const newId = vehicles.length ? Math.max(...vehicles.map(v => v.id)) + 1 : 1;
-    //         setVehicles([...vehicles, { id: newId, plate, type, seats, year, status }]);
-    //         logAction('Thêm phương tiện', `ID: ${newId}, Biển số: ${plate}`);
-    //     }
-
-    //     setShowModal(false);
-    //     resetForm();
-    // };
-
-    // const deleteVehicle = (id) => {
-    //     const vehicle = vehicles.find(v => v.id === id);
-    //     if (vehicle && window.confirm('Bạn có chắc muốn xóa phương tiện này?')) {
-    //         setVehicles(vehicles.filter(v => v.id !== id));
-    //         logAction('Xóa phương tiện', `ID: ${id}, Biển số: ${vehicle.plate}`);
-    //     }
-    // };
-
-    // const logAction = (action, details) => {
-    //     const timestamp = new Date().toLocaleString('vi-VN');
-    //     const newLog = [...actionLog, { timestamp, action, details }];
-    //     setActionLog(newLog);
-    //     localStorage.setItem('actionLog', JSON.stringify(newLog));
-    // };
-
-    // const logout = () => {
-    //     if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
-    //         window.location.href = 'loginadmin.html';
-    //     }
-    // };
-
-const [vehicles, setVehicles] = useState([
+  const [vehicles, setVehicles] = useState([
     {
       id: 1,
       licensePlate: '51A-12345',
@@ -154,17 +23,20 @@ const [vehicles, setVehicles] = useState([
     },
   ]);
 
-  const columns = [
-    { label: 'ID', key: 'id' },
-    { label: 'Biển số xe', key: 'licensePlate' },
-    { label: 'Loại xe', key: 'type' },
-    { label: 'Số ghế', key: 'seats' },
-    { label: 'Năm sản xuất', key: 'year' },
-    { label: 'Trạng thái', key: 'status' },
-  ];
+  const [showModal, setShowModal] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(null);
+  const [newVehicle, setNewVehicle] = useState({
+    licensePlate: '',
+    type: '',
+    seats: '',
+    year: '',
+    status: '',
+  });
 
-  const handleEdit = (id) => {
-    alert(`Chỉnh sửa xe có ID: ${id}`);
+  const handleEdit = (vehicle) => {
+    setEditingVehicle(vehicle);
+    setNewVehicle({ ...vehicle });
+    setShowModal(true);
   };
 
   const handleDelete = (id) => {
@@ -173,25 +45,142 @@ const [vehicles, setVehicles] = useState([
     }
   };
 
+  const handleSaveVehicle = () => {
+    if (editingVehicle) {
+      // Cập nhật xe
+      /*
+      updateVehicleAPI(editingVehicle.id, newVehicle).then(() => {
+        fetchVehicles();
+      });
+      */
+      setVehicles(vehicles.map(vehicle =>
+        vehicle.id === editingVehicle.id
+          ? { ...editingVehicle, ...newVehicle, seats: parseInt(newVehicle.seats), year: parseInt(newVehicle.year) }
+          : vehicle
+      ));
+    } else {
+      // Thêm mới
+      /*
+      createVehicleAPI(newVehicle).then(() => {
+        fetchVehicles();
+      });
+      */
+      const newId = vehicles.length ? Math.max(...vehicles.map((v) => v.id)) + 1 : 1;
+      setVehicles([
+        ...vehicles,
+        {
+          id: newId,
+          ...newVehicle,
+          seats: parseInt(newVehicle.seats),
+          year: parseInt(newVehicle.year),
+        },
+      ]);
+    }
 
-    return (
-        <HomeAdminLayout>
-         <div className="ticket-container">
+    setNewVehicle({ licensePlate: '', type: '', seats: '', year: '', status: '' });
+    setEditingVehicle(null);
+    setShowModal(false);
+  };
+
+  const columns = [
+    { label: 'ID', key: 'id' },
+    { label: 'Biển số xe', key: 'licensePlate' },
+    { label: 'Loại xe', key: 'type' },
+    { label: 'Số ghế', key: 'seats' },
+    { label: 'Năm sản xuất', key: 'year' },
+    { label: 'Trạng thái', key: 'status' },
+    { label: 'Hành động', key: 'actions' },
+  ];
+
+  return (
+    <HomeAdminLayout>
+      <div className="ticket-container">
         <h1 className="page-title">Danh Sách Phương Tiện</h1>
         <div className="action-bar">
-          <button className="add-btn">Thêm Phương Tiện</button>
+          <button
+            className="add-btn"
+            onClick={() => {
+              setEditingVehicle(null);
+              setNewVehicle({ licensePlate: '', type: '', seats: '', year: '', status: '' });
+              setShowModal(true);
+            }}
+          >
+            Thêm Phương Tiện
+          </button>
         </div>
 
         <Table
           columns={columns}
-          data={vehicles}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          data={vehicles.map((vehicle) => ({
+            ...vehicle,
+            actions: (
+              <div className="action-buttons">
+                <button className="edit-btn" onClick={() => handleEdit(vehicle)}>Sửa</button>
+                <button className="delete-btn" onClick={() => handleDelete(vehicle.id)}>Xóa</button>
+              </div>
+            ),
+          }))}
         />
-      </div>
-        </HomeAdminLayout>
 
-    );
+        <ReusableModal
+          title={editingVehicle ? 'Sửa Phương Tiện' : 'Thêm Phương Tiện Mới'}
+          show={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setEditingVehicle(null);
+            setNewVehicle({ licensePlate: '', type: '', seats: '', year: '', status: '' });
+          }}
+          onSubmit={handleSaveVehicle}
+        >
+          <div className="form-group">
+            <label>Biển số xe:</label>
+            <input
+              type="text"
+              value={newVehicle.licensePlate}
+              onChange={(e) => setNewVehicle({ ...newVehicle, licensePlate: e.target.value })}
+              placeholder="VD: 51A-12345"
+            />
+          </div>
+          <div className="form-group">
+            <label>Loại xe:</label>
+            <input
+              type="text"
+              value={newVehicle.type}
+              onChange={(e) => setNewVehicle({ ...newVehicle, type: e.target.value })}
+              placeholder="VD: Ghế ngồi"
+            />
+          </div>
+          <div className="form-group">
+            <label>Số ghế:</label>
+            <input
+              type="number"
+              value={newVehicle.seats}
+              onChange={(e) => setNewVehicle({ ...newVehicle, seats: e.target.value })}
+              placeholder="VD: 45"
+            />
+          </div>
+          <div className="form-group">
+            <label>Năm sản xuất:</label>
+            <input
+              type="number"
+              value={newVehicle.year}
+              onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
+              placeholder="VD: 2020"
+            />
+          </div>
+          <div className="form-group">
+            <label>Trạng thái:</label>
+            <input
+              type="text"
+              value={newVehicle.status}
+              onChange={(e) => setNewVehicle({ ...newVehicle, status: e.target.value })}
+              placeholder="VD: Đang hoạt động"
+            />
+          </div>
+        </ReusableModal>
+      </div>
+    </HomeAdminLayout>
+  );
 };
 
 export default Vehicles;

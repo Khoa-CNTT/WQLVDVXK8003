@@ -1,16 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
 import Table from '../../../components/ReusableTable/Table';
+import ReusableModal from '../../../components/ReusableModal/ReusableModal';
 
 const Drivers = () => {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch data giả lập
+  const [showModal, setShowModal] = useState(false);
+  const [editingDriver, setEditingDriver] = useState(null);
+  const [newDriver, setNewDriver] = useState({
+    name: '',
+    phone: '',
+    birthdate: '',
+    experience: '',
+    status: 'active',
+  });
+
+  // useEffect giả lập fetch API
   useEffect(() => {
     setLoading(true);
-    // Mô phỏng gọi API
     setTimeout(() => {
       try {
         setDrivers([
@@ -47,6 +57,41 @@ const Drivers = () => {
     }, 500);
   }, []);
 
+  const handleEdit = (driver) => {
+    setEditingDriver(driver);
+    setNewDriver({ ...driver });
+    setShowModal(true);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm(`Xoá tài xế có ID: ${id}?`)) {
+      setDrivers(drivers.filter((driver) => driver.id !== id));
+    }
+  };
+
+  const handleSaveDriver = () => {
+    if (editingDriver) {
+      // Cập nhật
+      /*
+      updateDriverAPI(editingDriver.id, newDriver).then(() => fetchDrivers());
+      */
+      setDrivers(drivers.map((d) =>
+        d.id === editingDriver.id ? { ...editingDriver, ...newDriver } : d
+      ));
+    } else {
+      // Thêm mới
+      /*
+      createDriverAPI(newDriver).then(() => fetchDrivers());
+      */
+      const newId = drivers.length ? Math.max(...drivers.map((d) => d.id)) + 1 : 1;
+      setDrivers([...drivers, { id: newId, ...newDriver }]);
+    }
+
+    setNewDriver({ name: '', phone: '', birthdate: '', experience: '', status: 'active' });
+    setEditingDriver(null);
+    setShowModal(false);
+  };
+
   const columns = [
     { key: 'id', label: 'ID' },
     { key: 'name', label: 'Họ tên' },
@@ -70,33 +115,104 @@ const Drivers = () => {
         return <span className={classMap[value]}>{statusMap[value]}</span>;
       },
     },
+    {
+      key: 'actions',
+      label: 'Hành động',
+      render: (_, driver) => (
+        <div className="action-buttons">
+          <button className="edit-btn" onClick={() => handleEdit(driver)}>Sửa</button>
+          <button className="delete-btn" onClick={() => handleDelete(driver.id)}>Xoá</button>
+        </div>
+      ),
+    },
   ];
-
-  const handleEdit = (driver) => {
-    alert(`Chỉnh sửa tài xế: ${driver.name}`);
-  };
-
-  const handleDelete = (driver) => {
-    if (window.confirm(`Xác nhận xóa tài xế ${driver.name}?`)) {
-      setDrivers((prev) => prev.filter((d) => d.id !== driver.id));
-    }
-  };
 
   return (
     <HomeAdminLayout>
       <div className="ticket-container">
         <h1 className="page-title">Danh Sách Tài Xế</h1>
         <div className="action-bar">
-          <button className="add-btn">Thêm Tài Xế</button>
+          <button
+            className="add-btn"
+            onClick={() => {
+              setEditingDriver(null);
+              setNewDriver({
+                name: '',
+                phone: '',
+                birthdate: '',
+                experience: '',
+                status: 'active',
+              });
+              setShowModal(true);
+            }}
+          >
+            Thêm Tài Xế
+          </button>
         </div>
         <Table
           columns={columns}
           data={drivers}
           loading={loading}
           error={error}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
         />
+
+        <ReusableModal
+          title={editingDriver ? 'Sửa Tài Xế' : 'Thêm Tài Xế Mới'}
+          show={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setEditingDriver(null);
+            setNewDriver({ name: '', phone: '', birthdate: '', experience: '', status: 'active' });
+          }}
+          onSubmit={handleSaveDriver}
+        >
+          <div className="form-group">
+            <label>Họ tên:</label>
+            <input
+              type="text"
+              value={newDriver.name}
+              onChange={(e) => setNewDriver({ ...newDriver, name: e.target.value })}
+              placeholder="VD: Nguyễn Văn A"
+            />
+          </div>
+          <div className="form-group">
+            <label>Số điện thoại:</label>
+            <input
+              type="text"
+              value={newDriver.phone}
+              onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
+              placeholder="VD: 0909123456"
+            />
+          </div>
+          <div className="form-group">
+            <label>Ngày sinh:</label>
+            <input
+              type="date"
+              value={newDriver.birthdate}
+              onChange={(e) => setNewDriver({ ...newDriver, birthdate: e.target.value })}
+            />
+          </div>
+          <div className="form-group">
+            <label>Kinh nghiệm:</label>
+            <input
+              type="text"
+              value={newDriver.experience}
+              onChange={(e) => setNewDriver({ ...newDriver, experience: e.target.value })}
+              placeholder="VD: 5 năm"
+            />
+          </div>
+          <div className="form-group">
+            <label>Trạng thái:</label>
+            <select
+              value={newDriver.status}
+              onChange={(e) => setNewDriver({ ...newDriver, status: e.target.value })}
+            >
+              <option value="active">Hoạt động</option>
+              <option value="on_leave">Nghỉ phép</option>
+              <option value="inactive">Ngừng làm việc</option>
+            </select>
+          </div>
+        </ReusableModal>
       </div>
     </HomeAdminLayout>
   );

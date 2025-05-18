@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
 import Table from '../../../components/ReusableTable/Table';
+import ReusableModal from '../../../components/ReusableModal/ReusableModal';
 
-export const Trips = () => {
-  const trips = [
+const Trips = () => {
+  const [trips, setTrips] = useState([
     {
       id: 1,
       route: 'Hà Nội - Sài Gòn',
@@ -31,7 +32,59 @@ export const Trips = () => {
       departure_time: '06:00',
       status: 'canceled',
     },
-  ];
+  ]);
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingTrip, setEditingTrip] = useState(null);
+  const [newTrip, setNewTrip] = useState({
+    route: '',
+    vehicle: '',
+    driver: '',
+    departure_date: '',
+    departure_time: '',
+    status: 'pending',
+  });
+
+  const handleEdit = (trip) => {
+    setEditingTrip(trip);
+    setNewTrip({
+      route: trip.route,
+      vehicle: trip.vehicle,
+      driver: trip.driver,
+      departure_date: trip.departure_date,
+      departure_time: trip.departure_time,
+      status: trip.status,
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = (trip) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa chuyến xe ID ${trip.id}?`)) {
+      setTrips(trips.filter((t) => t.id !== trip.id));
+    }
+  };
+
+  const handleSaveTrip = () => {
+    if (editingTrip) {
+      setTrips(trips.map(t =>
+        t.id === editingTrip.id ? { ...editingTrip, ...newTrip } : t
+      ));
+    } else {
+      const newId = trips.length ? Math.max(...trips.map(t => t.id)) + 1 : 1;
+      setTrips([...trips, { id: newId, ...newTrip }]);
+    }
+
+    setShowModal(false);
+    setEditingTrip(null);
+    setNewTrip({
+      route: '',
+      vehicle: '',
+      driver: '',
+      departure_date: '',
+      departure_time: '',
+      status: 'pending',
+    });
+  };
 
   const columns = [
     { key: 'id', label: 'ID' },
@@ -59,31 +112,118 @@ export const Trips = () => {
     },
   ];
 
-  const handleEdit = (trip) => {
-    console.log('Edit trip', trip);
-  };
-
-  const handleDelete = (trip) => {
-    console.log('Delete trip', trip);
-  };
-
   return (
     <HomeAdminLayout>
       <div className="ticket-container">
         <h1 className="page-title">Danh Sách Chuyến Xe</h1>
 
         <div className="action-bar">
-          <button className="add-btn">Thêm Chuyến Xe</button>
+          <button
+            className="add-btn"
+            onClick={() => {
+              setEditingTrip(null);
+              setNewTrip({
+                route: '',
+                vehicle: '',
+                driver: '',
+                departure_date: '',
+                departure_time: '',
+                status: 'pending',
+              });
+              setShowModal(true);
+            }}
+          >
+            Thêm Chuyến Xe
+          </button>
         </div>
 
         <Table
-          columns={columns}
-          data={trips}
+          columns={[...columns, { key: 'actions', label: 'Hành động' }]}
+          data={trips.map((trip) => ({
+            ...trip,
+            actions: (
+              <div className="action-buttons">
+                <button className="edit-btn" onClick={() => handleEdit(trip)}>Sửa</button>
+                <button className="delete-btn" onClick={() => handleDelete(trip)}>Xóa</button>
+              </div>
+            ),
+          }))}
           loading={false}
           error={null}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
         />
+
+        <ReusableModal
+          title={editingTrip ? 'Sửa Chuyến Xe' : 'Thêm Chuyến Xe'}
+          show={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setEditingTrip(null);
+            setNewTrip({
+              route: '',
+              vehicle: '',
+              driver: '',
+              departure_date: '',
+              departure_time: '',
+              status: 'pending',
+            });
+          }}
+          onSubmit={handleSaveTrip}
+        >
+          <div className="form-group">
+            <label>Tuyến đường</label>
+            <input
+              type="text"
+              value={newTrip.route}
+              onChange={(e) => setNewTrip({ ...newTrip, route: e.target.value })}
+              placeholder="VD: Đà Nẵng - Huế"
+            />
+          </div>
+          <div className="form-group">
+            <label>Phương tiện</label>
+            <input
+              type="text"
+              value={newTrip.vehicle}
+              onChange={(e) => setNewTrip({ ...newTrip, vehicle: e.target.value })}
+              placeholder="VD: Xe 45 chỗ"
+            />
+          </div>
+          <div className="form-group">
+            <label>Tài xế</label>
+            <input
+              type="text"
+              value={newTrip.driver}
+              onChange={(e) => setNewTrip({ ...newTrip, driver: e.target.value })}
+              placeholder="VD: Nguyễn Văn A"
+            />
+          </div>
+          <div className="form-group">
+            <label>Ngày khởi hành</label>
+            <input
+              type="date"
+              value={newTrip.departure_date}
+              onChange={(e) => setNewTrip({ ...newTrip, departure_date: e.target.value })}
+            />
+          </div>
+          <div className="form-group">
+            <label>Thời gian khởi hành</label>
+            <input
+              type="time"
+              value={newTrip.departure_time}
+              onChange={(e) => setNewTrip({ ...newTrip, departure_time: e.target.value })}
+            />
+          </div>
+          <div className="form-group">
+            <label>Trạng thái</label>
+            <select
+              value={newTrip.status}
+              onChange={(e) => setNewTrip({ ...newTrip, status: e.target.value })}
+            >
+              <option value="pending">Chờ chạy</option>
+              <option value="completed">Hoàn thành</option>
+              <option value="canceled">Đã hủy</option>
+            </select>
+          </div>
+        </ReusableModal>
       </div>
     </HomeAdminLayout>
   );
