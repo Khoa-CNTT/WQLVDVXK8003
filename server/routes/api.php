@@ -69,7 +69,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 });
 
 // Route group cho các API chỉ dành cho admin
-Route::prefix('v1/admin')->middleware(['admin'])->group(function () {
+Route::prefix('v1/admin')->middleware(['auth:sanctum','admin'])->group(function () {
     // Quản lý tuyến đường
     Route::apiResource('routes', RouteController::class);
 
@@ -101,4 +101,11 @@ Route::prefix('v1/admin')->middleware(['admin'])->group(function () {
 
     // Quản lý chatbot
     Route::get('chatbot/logs', [ChatbotController::class, 'logs']);
+});
+
+// Chatbot routes
+Route::prefix('v1/chatbot')->group(function () {
+    Route::post('query', [ChatbotController::class, 'handleQuery']);
+    Route::get('history', [ChatbotController::class, 'getHistory'])->middleware('auth:sanctum');
+    Route::delete('history', [ChatbotController::class, 'clearHistory'])->middleware('auth:sanctum');
 });

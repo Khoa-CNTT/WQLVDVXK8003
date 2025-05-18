@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Route;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class RouteController extends Controller
 {
@@ -16,12 +17,11 @@ class RouteController extends Controller
      */
     public function index()
     {
-        $routes = Route::paginate(20);
-
-        return response()->json([
-            'success' => true,
-            'data' => $routes
-        ]);
+        return Cache::remember('routes.all', 3600, function () {
+            return Route::with(['trips' => function ($query) {
+                $query->whereDate('departure_time', '>=', now());
+            }])->get();
+        });
     }
 
     /**
@@ -32,28 +32,22 @@ class RouteController extends Controller
      */
     public function search(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'departure' => 'required|string',
-            'destination' => 'required|string',
-        ]);
+        $cacheKey = 'routes.search.' . md5(json_encode($request->all()));
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi xác thực dữ liệu',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $routes = Route::where(function($query) use ($request) {
-            $query->where('departure', 'like', '%' . $request->departure . '%')
-                  ->where('destination', 'like', '%' . $request->destination . '%');
-        })->paginate(10);
-
-        return response()->json([
-            'success' => true,
-            'data' => $routes
-        ]);
+        return Cache::remember($cacheKey, 1800, function () use ($request) {
+            return Route::query()
+                ->when($request->from, function ($query, $from) {
+                    return $query->where('departure_location', 'like', "%{$from}%");
+                })
+                ->when($request->to, function ($query, $to) {
+                    return $query->where('arrival_location', 'like', "%{$to}%");
+                })
+                ->with(['trips' => function ($query) {
+                    $query->whereDate('departure_time', '>=', now())
+                          ->orderBy('departure_time');
+                }])
+                ->get();
+        });
     }
 
     /**
@@ -92,6 +86,8 @@ class RouteController extends Controller
             'status' => $request->status,
         ]);
 
+        Cache::tags(['routes'])->flush();
+
         return response()->json([
             'success' => true,
             'message' => 'Tạo tuyến đường thành công',
@@ -107,12 +103,12 @@ class RouteController extends Controller
      */
     public function show($id)
     {
-        $route = Route::with('trips')->findOrFail($id);
-
-        return response()->json([
-            'success' => true,
-            'data' => $route
-        ]);
+        return Cache::remember('routes.' . $id, 3600, function () use ($id) {
+            return Route::with(['trips' => function ($query) {
+                $query->whereDate('departure_time', '>=', now())
+                      ->orderBy('departure_time');
+            }])->findOrFail($id);
+        });
     }
 
     /**
@@ -153,6 +149,8 @@ class RouteController extends Controller
             'status' => $request->status,
         ]);
 
+        Cache::tags(['routes'])->flush();
+
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật tuyến đường thành công',
@@ -179,6 +177,8 @@ class RouteController extends Controller
         }
 
         $route->delete();
+
+        Cache::tags(['routes'])->flush();
 
         return response()->json([
             'success' => true,

@@ -138,7 +138,8 @@ class AuthController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function forgotPassword(Request $request)
-    {
+{
+    try {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
         ]);
@@ -151,14 +152,37 @@ class AuthController extends Controller
             ], 422);
         }
 
+        // Kiểm tra xem email có tồn tại trong hệ thống không
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy tài khoản với email này'
+            ], 404);
+        }
+
+        // Ghi log - đúng cú pháp
+        \Illuminate\Support\Facades\Log::info('Sending password reset email to: ' . $request->email);
+
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
+        \Illuminate\Support\Facades\Log::info('Password reset status: ' . $status);
+
         return $status === Password::RESET_LINK_SENT
             ? response()->json(['success' => true, 'message' => 'Đã gửi email đặt lại mật khẩu'])
-            : response()->json(['success' => false, 'message' => 'Không thể gửi email đặt lại mật khẩu'], 400);
+            : response()->json(['success' => false, 'message' => __($status)], 400);
+    } catch (\Exception $e) {
+        // Ghi log lỗi - đúng cú pháp
+        \Illuminate\Support\Facades\Log::error('Error in forgotPassword: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Lỗi server: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Đặt lại mật khẩu

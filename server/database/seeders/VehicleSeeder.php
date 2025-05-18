@@ -69,8 +69,15 @@ class VehicleSeeder extends Seeder
             ],
         ];
 
+        $count = 0;
         foreach ($vehicles as $vehicle) {
-            Vehicle::create($vehicle);
+            // Kiểm tra xem xe đã tồn tại chưa dựa trên biển số
+            if (!Vehicle::where('license_plate', $vehicle['license_plate'])->exists()) {
+                Vehicle::create($vehicle);
+                $count++;
+            }
         }
+
+        $this->command->info("Đã tạo $count xe mới.");
     }
 }

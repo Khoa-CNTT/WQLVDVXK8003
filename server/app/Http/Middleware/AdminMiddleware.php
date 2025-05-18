@@ -16,23 +16,21 @@ class AdminMiddleware
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
-{
-    // Kiểm tra đăng nhập
-    if (!Auth::check()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Chưa đăng nhập'
-        ], 401);
-    }
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
 
-    // Kiểm tra admin
-    if (Auth::user()->role_id !== 1) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Không có quyền truy cập'
-        ], 403);
-    }
+        if (!Auth::user()->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: Admin access required'
+            ], 403);
+        }
 
-    return $next($request);
-}
+        return $next($request);
+    }
 }
