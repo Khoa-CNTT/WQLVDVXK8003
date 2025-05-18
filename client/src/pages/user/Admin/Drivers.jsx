@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
-import Table from '../../../components/ReusableTable/Table';
 import ReusableModal from '../../../components/ReusableModal/ReusableModal';
+import ReusableTable from '../../../components/ReusableTable/ReusableTable';
 
 const Drivers = () => {
   const [drivers, setDrivers] = useState([]);
@@ -48,6 +48,30 @@ const Drivers = () => {
             experience: '15 năm',
             status: 'inactive',
           },
+          {
+            id: 4,
+            name: 'Phạm Văn D',
+            phone: '0933456789',
+            birthdate: '1988-03-22',
+            experience: '9 năm',
+            status: 'active',
+          },
+          {
+            id: 5,
+            name: 'Đỗ Thị E',
+            phone: '0944567890',
+            birthdate: '1992-11-10',
+            experience: '5 năm',
+            status: 'on_leave',
+          },
+          {
+            id: 6,
+            name: 'Bùi Văn F',
+            phone: '0955678901',
+            birthdate: '1980-07-07',
+            experience: '20 năm',
+            status: 'inactive',
+          }
         ]);
         setLoading(false);
       } catch (e) {
@@ -149,7 +173,7 @@ const Drivers = () => {
             Thêm Tài Xế
           </button>
         </div>
-        <Table
+        <ReusableTable
           columns={columns}
           data={drivers}
           loading={loading}

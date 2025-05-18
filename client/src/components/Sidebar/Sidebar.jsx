@@ -15,15 +15,21 @@ const menuItems = [
 const MenuItem = ({ to, children }) => (
   <NavLink
     to={to}
+    end={to === '/admin/'} // chỉ dùng end với đường dẫn chính xác (ở đây là /admin/)
     className={({ isActive }) =>
       `menu-item block py-2 px-4 rounded hover:bg-gray-100 ${
-        isActive ? 'text-[#f97316] font-semibold' : 'text-gray-700'
+        isActive ? 'bg-[#f97316]' : ''
       }`
     }
+    style={({ isActive }) => ({
+      color: isActive ? 'white' : undefined,
+    })}
   >
     {children}
   </NavLink>
 );
+
+
 
 const Sidebar = () => {
   return (

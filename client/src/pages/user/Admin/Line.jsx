@@ -1,25 +1,54 @@
 import React, { useState } from 'react';
-import Table from '../../../components/ReusableTable/Table';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
 import ReusableModal from '../../../components/ReusableModal/ReusableModal'; // Đường dẫn modal của bạn
+import ReusableTable from '../../../components/ReusableTable/ReusableTable';
 
 const Line = () => {
-  const [lines, setLines] = useState([
-    {
-      id: 1,
-      name: 'Sài Gòn - Nha Trang',
-      seats: 40,
-      departureDate: '2025-06-01',
-      price: 250000,
-    },
-    {
-      id: 2,
-      name: 'Hà Nội - Đà Nẵng',
-      seats: 38,
-      departureDate: '2025-06-05',
-      price: 320000,
-    },
-  ]);
+const [lines, setLines] = useState([
+  {
+    id: 1,
+    name: 'Sài Gòn - Nha Trang',
+    seats: 40,
+    departureDate: '2025-06-01',
+    price: 250000,
+  },
+  {
+    id: 2,
+    name: 'Hà Nội - Đà Nẵng',
+    seats: 38,
+    departureDate: '2025-06-05',
+    price: 320000,
+  },
+  {
+    id: 3,
+    name: 'Hải Phòng - Quảng Ninh',
+    seats: 35,
+    departureDate: '2025-06-03',
+    price: 180000,
+  },
+  {
+    id: 4,
+    name: 'Cần Thơ - Vũng Tàu',
+    seats: 42,
+    departureDate: '2025-06-07',
+    price: 290000,
+  },
+  {
+    id: 5,
+    name: 'Huế - Nha Trang',
+    seats: 36,
+    departureDate: '2025-06-04',
+    price: 270000,
+  },
+  {
+    id: 6,
+    name: 'Sài Gòn - Đà Lạt',
+    seats: 40,
+    departureDate: '2025-06-06',
+    price: 230000,
+  },
+]);
+
 
   const [showModal, setShowModal] = useState(false);
   const [editingLine, setEditingLine] = useState(null);
@@ -110,7 +139,7 @@ const Line = () => {
           </button>
         </div>
 
-        <Table
+        <ReusableTable
           columns={columns}
           data={lines.map((line) => ({
             ...line,

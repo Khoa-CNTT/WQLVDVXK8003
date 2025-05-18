@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
-import Table from '../../../components/ReusableTable/Table';
 import ReusableModal from '../../../components/ReusableModal/ReusableModal';
+import ReusableTable from '../../../components/ReusableTable/ReusableTable';
 
 const Trips = () => {
   const [trips, setTrips] = useState([
@@ -32,6 +32,34 @@ const Trips = () => {
       departure_time: '06:00',
       status: 'canceled',
     },
+    {
+      id: 4,
+      route: 'Sài Gòn - Phan Thiết',
+      vehicle: 'Xe giường nằm 40 chỗ',
+      driver: 'Phạm Văn D',
+      departure_date: '2025-05-28',
+      departure_time: '10:15',
+      status: 'completed',
+    },
+    {
+      id: 5,
+      route: 'Nha Trang - Đà Lạt',
+      vehicle: 'Xe limousine 12 chỗ',
+      driver: 'Trần Thị E',
+      departure_date: '2025-06-01',
+      departure_time: '14:45',
+      status: 'pending',
+    },
+    {
+      id: 6,
+      route: 'Hà Nội - Hải Phòng',
+      vehicle: 'Xe thường 29 chỗ',
+      driver: 'Nguyễn Văn F',
+      departure_date: '2025-06-05',
+      departure_time: '07:30',
+      status: 'completed',
+    },
+
   ]);
 
   const [showModal, setShowModal] = useState(false);
@@ -137,7 +165,7 @@ const Trips = () => {
           </button>
         </div>
 
-        <Table
+        <ReusableTable
           columns={[...columns, { key: 'actions', label: 'Hành động' }]}
           data={trips.map((trip) => ({
             ...trip,

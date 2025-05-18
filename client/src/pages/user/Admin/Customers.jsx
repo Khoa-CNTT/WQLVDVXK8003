@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Table from '../../../components/ReusableTable/Table';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
 import ReusableModal from '../../../components/ReusableModal/ReusableModal';
+import ReusableTable from '../../../components/ReusableTable/ReusableTable';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -38,6 +38,38 @@ const Customers = () => {
             phone: '0911222333',
             birthdate: '1990-10-12',
             status: 'blocked',
+          },
+          {
+            id: 3,
+            name: 'Lê Thị F',
+            email: 'lethif@example.com',
+            phone: '0922333444',
+            birthdate: '1988-05-05',
+            status: 'active',
+          },
+          {
+            id: 4,
+            name: 'Trần Văn G',
+            email: 'tranvang@example.com',
+            phone: '0933444555',
+            birthdate: '1992-09-20',
+            status: 'active',
+          },
+          {
+            id: 5,
+            name: 'Hoàng Thị H',
+            email: 'hoangthih@example.com',
+            phone: '0944555666',
+            birthdate: '1985-12-15',
+            status: 'blocked',
+          },
+          {
+            id: 6,
+            name: 'Phan Văn I',
+            email: 'phanvani@example.com',
+            phone: '0955666777',
+            birthdate: '1993-07-07',
+            status: 'active',
           },
         ]);
         setLoading(false);
@@ -124,7 +156,7 @@ const Customers = () => {
             Thêm Khách Hàng
           </button>
         </div>
-        <Table
+        <ReusableTable
           columns={columns}
           data={customers}
           loading={loading}

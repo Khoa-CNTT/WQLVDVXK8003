@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
-import Table from '../../../components/ReusableTable/Table';
 import ReusableModal from '../../../components/ReusableModal/ReusableModal';
+import ReusableTable from '../../../components/ReusableTable/ReusableTable';
 
 const Vehicles = () => {
   const [vehicles, setVehicles] = useState([
@@ -20,6 +20,38 @@ const Vehicles = () => {
       seats: 40,
       year: 2018,
       status: 'Bảo trì',
+    },
+    {
+      id: 3,
+      licensePlate: '70C-23456',
+      type: 'Ghế ngồi',
+      seats: 50,
+      year: 2021,
+      status: 'Đang hoạt động',
+    },
+    {
+      id: 4,
+      licensePlate: '80D-34567',
+      type: 'Giường nằm',
+      seats: 38,
+      year: 2019,
+      status: 'Đang hoạt động',
+    },
+    {
+      id: 5,
+      licensePlate: '90E-45678',
+      type: 'Ghế ngồi',
+      seats: 42,
+      year: 2022,
+      status: 'Bảo trì',
+    },
+    {
+      id: 6,
+      licensePlate: '10F-56789',
+      type: 'Giường nằm',
+      seats: 44,
+      year: 2017,
+      status: 'Đang hoạt động',
     },
   ]);
 
@@ -109,7 +141,7 @@ const Vehicles = () => {
           </button>
         </div>
 
-        <Table
+        <ReusableTable
           columns={columns}
           data={vehicles.map((vehicle) => ({
             ...vehicle,
