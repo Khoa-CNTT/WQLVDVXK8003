@@ -1,14 +1,14 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar/Sidebar';
 
-const HomeAdminLayout = ({ children }) => {
+const Layout = ({ children }) => {
   const currentDateTime = new Date().toLocaleString(); 
   // Hàm đăng xuất
     const handleLogout = () => {
         if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
             localStorage.removeItem('authData');
             localStorage.removeItem('userInfo');
-            window.location.href = '/login';
+            window.location.href = '/';
         }
     };
 
@@ -32,4 +32,4 @@ const HomeAdminLayout = ({ children }) => {
   );
 };
 
-export default HomeAdminLayout;
+export default Layout;
