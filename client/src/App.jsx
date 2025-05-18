@@ -6,6 +6,7 @@ import userRoutes from './routes/userRoutes';
 import adminRoutes from './routes/adminRoutes';
 import Dashboard from './pages/user/Admin/Dashboard';
 import Home from './pages/user/Home';
+import PublicRoute from './contexts/PublicRoute';
 
 const App = () => {
   return (
@@ -13,18 +14,30 @@ const App = () => {
       <AuthProvider>
         <Routes>
           {/* Public routes */}
-          {publicRoutes.map(({ path, element }, idx) => (
-            <Route key={idx} path={path} element={element} />
-          ))}
+
+          <Route element={<PublicRoute />}>
+            {publicRoutes.map(({ path, element }, idx) => (
+              <Route key={idx} path={path} element={element} />
+            ))}
+          </Route>
+
 
           {/* User routes */}
           {userRoutes.map(({ path, element }, idx) => (
-            <Route key={idx} path={path} element={element} />
+            <Route
+              key={idx}
+              path={path}
+              element={<ProtectedRoute requiredRole={1}>{element}</ProtectedRoute>}
+            />
           ))}
 
           {/* Admin routes */}
           {adminRoutes.map(({ path, element }, idx) => (
-            <Route key={idx} path={path} element={element} />
+            <Route
+              key={idx}
+              path={path}
+              element={<ProtectedRoute requiredRole={1}>{element}</ProtectedRoute>}
+            />
           ))}
 
           {/* Fallback route */}

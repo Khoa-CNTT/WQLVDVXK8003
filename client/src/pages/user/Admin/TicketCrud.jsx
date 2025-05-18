@@ -29,6 +29,7 @@ const TicketCrud = () => {
     // Hàm lấy token từ localStorage
     const getToken = () => {
         const authData = localStorage.getItem('authData');
+        console.log('authData',authData)
         if (authData) {
             try {
                 const parsed = JSON.parse(authData);
@@ -64,6 +65,7 @@ const TicketCrud = () => {
             try {
                 setLoading(true);
                 const token = getToken();
+                console.log('token',token)
 
                 if (!token) {
                     throw new Error('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn');

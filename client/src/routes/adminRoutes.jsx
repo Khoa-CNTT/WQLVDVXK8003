@@ -10,65 +10,65 @@ import Drivers from '../pages/user/Admin/Drivers';
 
 const adminRoutes = [
   {
-    path: '/dashboard',
+    path: '/admin/dashboard',
     element: (
-      <ProtectedRoute requiredRole={1}>
+      <ProtectedRoute >
         <Dashboard />
       </ProtectedRoute>
     ),
   },
   {
-    path: '/ticketCrud',
+    path: '/admin/ticketCrud',
     element: (
-      <ProtectedRoute requiredRole={1}>
+      <ProtectedRoute >
         <TicketCrud />
       </ProtectedRoute>
     ),
   },
   {
-    path: '/vehicles',
+    path: '/admin/vehicles',
     element: (
-      <ProtectedRoute requiredRole={1}>
+      <ProtectedRoute >
         <Vehicles />
       </ProtectedRoute>
     ),
   },
   {
-    path: '/trips',
+    path: '/admin/trips',
     element: (
-      <ProtectedRoute requiredRole={1}>
+      <ProtectedRoute >
         <Trips />
       </ProtectedRoute>
     ),
   },
     {
-    path: '/line',
+    path: '/admin/line',
     element: (
-      <ProtectedRoute requiredRole={1}>
+      <ProtectedRoute >
         <Line />
       </ProtectedRoute>
     ),
   },
   {
-    path: '/customers',
+    path: '/admin/customers',
     element: (
-      <ProtectedRoute requiredRole={1}>
+      <ProtectedRoute >
         <Customers />
       </ProtectedRoute>
     ),
   },
   {
-    path: '/amenities',
+    path: '/admin/amenities',
     element: (
-      <ProtectedRoute requiredRole={1}>
+      <ProtectedRoute >
         <Amenities />
       </ProtectedRoute>
     ),
   },
     {
-    path: '/drivers',
+    path: '/admin/drivers',
     element: (
-      <ProtectedRoute requiredRole={1}>
+      <ProtectedRoute >
         <Drivers />
       </ProtectedRoute>
     ),

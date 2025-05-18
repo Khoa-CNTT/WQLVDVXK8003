@@ -2,14 +2,14 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 const menuItems = [
-  { path: '/dashboard', label: 'Thống kê' },
-  { path: '/ticketCrud', label: 'Vé xe' },
-  { path: '/vehicles', label: 'Phương tiện' },
-  { path: '/line', label: 'Tuyến đường' },
-  { path: '/trips', label: 'Chuyến xe' },
-  { path: '/drivers', label: 'Tài xế' },
-  { path: '/customers', label: 'Khách hàng' },
-  { path: '/amenities', label: 'Tiện ích' },
+  { path: '/admin/dashboard', label: 'Thống kê' },
+  { path: '/admin/ticketCrud', label: 'Vé xe' },
+  { path: '/admin/vehicles', label: 'Phương tiện' },
+  { path: '/admin/line', label: 'Tuyến đường' },
+  { path: '/admin/trips', label: 'Chuyến xe' },
+  { path: '/admin/drivers', label: 'Tài xế' },
+  { path: '/admin/customers', label: 'Khách hàng' },
+  { path: '/admin/amenities', label: 'Tiện ích' },
 ];
 
 const MenuItem = ({ to, children }) => (

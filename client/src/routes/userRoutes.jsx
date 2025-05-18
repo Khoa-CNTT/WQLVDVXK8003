@@ -11,7 +11,7 @@ const userRoutes = [
   {
     path: '/home',
     element: (
-      <ProtectedRoute requiredRole={2}>
+      <ProtectedRoute >
         <Home />
       </ProtectedRoute>
     ),
@@ -19,7 +19,7 @@ const userRoutes = [
   {
     path: '/profile',
     element: (
-      <ProtectedRoute requiredRole={2}>
+      <ProtectedRoute >
         <Profile />
       </ProtectedRoute>
     ),
@@ -27,7 +27,7 @@ const userRoutes = [
   {
     path: '/my-bookinglogin',
     element: (
-      <ProtectedRoute requiredRole={2}>
+      <ProtectedRoute >
         <MyBookingLogin />
       </ProtectedRoute>
     ),
@@ -35,7 +35,7 @@ const userRoutes = [
   {
     path: '/booking-resultslogin',
     element: (
-      <ProtectedRoute requiredRole={2}>
+      <ProtectedRoute >
         <BookingResultsLogin />
       </ProtectedRoute>
     ),
@@ -43,7 +43,7 @@ const userRoutes = [
   {
     path: '/ticket-detaillogin',
     element: (
-      <ProtectedRoute requiredRole={2}>
+      <ProtectedRoute >
         <Ticket_DetailLogin />
       </ProtectedRoute>
     ),
@@ -51,7 +51,7 @@ const userRoutes = [
   {
     path: '/securityLogin',
     element: (
-      <ProtectedRoute requiredRole={2}>
+      <ProtectedRoute >
         <SecurityLogin />
       </ProtectedRoute>
     ),
@@ -59,7 +59,7 @@ const userRoutes = [
   {
     path: '/utilitiesLogin',
     element: (
-      <ProtectedRoute requiredRole={2}>
+      <ProtectedRoute >
         <UtilitiesLogin />
       </ProtectedRoute>
     ),

@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 
 export const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, user, loading } = useAuth();
+  console.log('user',user,requiredRole)
 
   if (loading) {
     return (
@@ -16,9 +17,6 @@ export const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user?.role_id !== requiredRole) {
-    return <Navigate to={user.role_id === 1 ? '/dashboard' : '/home'} replace />;
-  }
-
-  return children;
+  // ⚠️ Hỗ trợ function hoặc node
+  return typeof children === 'function' ? children({ user }) : children;
 };
