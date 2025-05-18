@@ -12,7 +12,7 @@ const PublicRoute = () => {
   }
 
   if(user?.role_id===1){
-    return <Navigate to="/admin/dashboard" replace />
+    return <Navigate to="/admin" replace />
   }
 
   return <Navigate to="/home" replace />

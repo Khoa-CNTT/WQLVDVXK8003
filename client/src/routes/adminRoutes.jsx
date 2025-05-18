@@ -10,7 +10,7 @@ import Drivers from '../pages/user/Admin/Drivers';
 
 const adminRoutes = [
   {
-    path: '/admin/dashboard',
+    path: '/admin',
     element: (
       <ProtectedRoute >
         <Dashboard />

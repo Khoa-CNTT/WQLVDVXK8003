@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 const menuItems = [
-  { path: '/admin/dashboard', label: 'Thống kê' },
+  { path: '/admin/', label: 'Thống kê' },
   { path: '/admin/ticketCrud', label: 'Vé xe' },
   { path: '/admin/vehicles', label: 'Phương tiện' },
   { path: '/admin/line', label: 'Tuyến đường' },

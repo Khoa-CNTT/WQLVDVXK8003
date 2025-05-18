@@ -14,7 +14,7 @@ const HomeAdminLayout = ({ children }) => {
 
 
   return (
-    <div className="app-container">
+    <div className="app-container min-w-screen">
       <Sidebar />
       <main className="main-content">
         {/* Header */}
