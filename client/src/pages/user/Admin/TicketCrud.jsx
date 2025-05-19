@@ -3,6 +3,7 @@ import axios from 'axios';
 import './TicketCrud.css';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
 import ReusableModal from '../../../components/ReusableModal/ReusableModal';
+import { Storage } from '../../../constant/storage';
 
 const TicketCrud = () => {
     const [currentDateTime, setCurrentDateTime] = useState('');
@@ -28,7 +29,7 @@ const TicketCrud = () => {
 
     // Hàm lấy token từ localStorage
     const getToken = () => {
-        const authData = localStorage.getItem('authData');
+        const authData = localStorage.getItem(Storage.AUTH_DATA);
         console.log('authData',authData)
         if (authData) {
             try {
@@ -65,8 +66,6 @@ const TicketCrud = () => {
             try {
                 setLoading(true);
                 const token = getToken();
-                console.log('token',token)
-
                 if (!token) {
                     throw new Error('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn');
                 }
@@ -358,7 +357,7 @@ const TicketCrud = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {tickets.map(ticket => {
+                                {tickets?.map(ticket => {
                                     const route = routes.find(r => r.id === ticket.route_id);
                                     return (
                                         <tr key={ticket.id}>

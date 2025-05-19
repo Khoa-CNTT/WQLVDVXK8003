@@ -3,7 +3,6 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 const PublicRoute = () => {
-//   const isAuthenticated = !!localStorage.getItem("authData");
 
   const { isAuthenticated, user } = useAuth();
 

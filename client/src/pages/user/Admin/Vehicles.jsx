@@ -1,117 +1,161 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
 import ReusableModal from '../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../components/ReusableTable/ReusableTable';
+import { useApi } from '../../../hooks/useApi';
+import { fetchSortedData } from '../../../utils/fetchSortedData';
 
 const Vehicles = () => {
-  const [vehicles, setVehicles] = useState([
-    {
-      id: 1,
-      licensePlate: '51A-12345',
-      type: 'Ghế ngồi',
-      seats: 45,
-      year: 2020,
-      status: 'Đang hoạt động',
-    },
-    {
-      id: 2,
-      licensePlate: '61B-67890',
-      type: 'Giường nằm',
-      seats: 40,
-      year: 2018,
-      status: 'Bảo trì',
-    },
-    {
-      id: 3,
-      licensePlate: '70C-23456',
-      type: 'Ghế ngồi',
-      seats: 50,
-      year: 2021,
-      status: 'Đang hoạt động',
-    },
-    {
-      id: 4,
-      licensePlate: '80D-34567',
-      type: 'Giường nằm',
-      seats: 38,
-      year: 2019,
-      status: 'Đang hoạt động',
-    },
-    {
-      id: 5,
-      licensePlate: '90E-45678',
-      type: 'Ghế ngồi',
-      seats: 42,
-      year: 2022,
-      status: 'Bảo trì',
-    },
-    {
-      id: 6,
-      licensePlate: '10F-56789',
-      type: 'Giường nằm',
-      seats: 44,
-      year: 2017,
-      status: 'Đang hoạt động',
-    },
-  ]);
-
+  const api = useApi();
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const [newVehicle, setNewVehicle] = useState({
-    licensePlate: '',
+    name: '',
+    license_plate: '',
     type: '',
-    seats: '',
-    year: '',
+    model: '',
+    capacity: '',
+    manufacture_year: '',
     status: '',
+    amenities: '',
   });
+
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        setLoading(true);
+        const sortedData = await fetchSortedData(api, '/admin/vehicles');
+        const mappedVehicles = sortedData.map(vehicle => ({
+          id: vehicle.id,
+          licensePlate: vehicle.license_plate,
+          type: vehicle.type,
+          seats: vehicle.capacity,
+          year: vehicle.manufacture_year,
+          status: vehicle.status,
+          name: vehicle.name,
+          description: vehicle.description,
+          lastMaintenance: vehicle.last_maintenance,
+          createdAt: vehicle.created_at,
+          updatedAt: vehicle.updated_at,
+        }));
+        setVehicles(mappedVehicles);
+      } catch (err) {
+        console.error('Lỗi khi tải dữ liệu phương tiện:', err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicles();
+  }, [refreshKey]);
+
+  const createVehicleAPI = async (vehicle) => {
+    const payload = {
+      name: vehicle.name,
+      license_plate: vehicle.license_plate,
+      type: vehicle.type,
+      model: vehicle.model,
+      capacity: parseInt(vehicle.capacity, 10),
+      manufacture_year: parseInt(vehicle.manufacture_year, 10),
+      status: vehicle.status,
+      amenities: vehicle.amenities,
+    };
+
+    const response = await api.post('/admin/vehicles', payload);
+    return response.data;
+  };
+
+  const updateVehicleAPI = async (vehicleId, vehicle) => {
+    try {
+      const payload = {
+        name: vehicle.name,
+        license_plate: vehicle.license_plate,
+        type: vehicle.type,
+        model: vehicle.model,
+        capacity: parseInt(vehicle.capacity, 10),
+        manufacture_year: parseInt(vehicle.manufacture_year, 10),
+        status: vehicle.status,
+        amenities: vehicle.amenities,
+      };
+
+      const response = await api.put(`/admin/vehicles/${vehicleId}`, payload);
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Lỗi khi cập nhật phương tiện';
+      alert(message);
+      throw new Error(message);
+    }
+  };
+
+  const deleteVehicleAPI = async (vehicleId) => {
+    await api.delete(`/admin/vehicles/${vehicleId}`);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm(`Xóa xe có ID: ${id}?`)) {
+      try {
+        await deleteVehicleAPI(id);
+        setRefreshKey(prev => prev + 1);
+        alert('Xóa thành công!');
+      } catch (err) {
+        alert('Lỗi khi xoá phương tiện');
+      }
+    }
+  };
+
+  const handleSaveVehicle = async () => {
+    try {
+      if (editingVehicle) {
+        await updateVehicleAPI(editingVehicle.id, newVehicle);
+        alert('Cập nhật phương tiện thành công!');
+      } else {
+        await createVehicleAPI(newVehicle);
+        alert('Thêm phương tiện thành công!');
+      }
+
+      setShowModal(false);
+      setEditingVehicle(null);
+      setNewVehicle({
+        name: '',
+        license_plate: '',
+        type: '',
+        model: '',
+        capacity: '',
+        manufacture_year: '',
+        status: '',
+        amenities: '',
+      });
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Lỗi khi lưu phương tiện:', error);
+    }
+  };
 
   const handleEdit = (vehicle) => {
     setEditingVehicle(vehicle);
-    setNewVehicle({ ...vehicle });
+    setNewVehicle({
+      name: vehicle.name || '',
+      license_plate: vehicle.licensePlate || '',
+      type: vehicle.type || '',
+      model: vehicle.model || '',
+      capacity: vehicle.seats || '',
+      manufacture_year: vehicle.year || '',
+      status: vehicle.status || '',
+      amenities: vehicle.amenities || '',
+    });
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm(`Xóa xe có ID: ${id}?`)) {
-      setVehicles(vehicles.filter(vehicle => vehicle.id !== id));
-    }
-  };
-
-  const handleSaveVehicle = () => {
-    if (editingVehicle) {
-      // Cập nhật xe
-      /*
-      updateVehicleAPI(editingVehicle.id, newVehicle).then(() => {
-        fetchVehicles();
-      });
-      */
-      setVehicles(vehicles.map(vehicle =>
-        vehicle.id === editingVehicle.id
-          ? { ...editingVehicle, ...newVehicle, seats: parseInt(newVehicle.seats), year: parseInt(newVehicle.year) }
-          : vehicle
-      ));
-    } else {
-      // Thêm mới
-      /*
-      createVehicleAPI(newVehicle).then(() => {
-        fetchVehicles();
-      });
-      */
-      const newId = vehicles.length ? Math.max(...vehicles.map((v) => v.id)) + 1 : 1;
-      setVehicles([
-        ...vehicles,
-        {
-          id: newId,
-          ...newVehicle,
-          seats: parseInt(newVehicle.seats),
-          year: parseInt(newVehicle.year),
-        },
-      ]);
-    }
-
-    setNewVehicle({ licensePlate: '', type: '', seats: '', year: '', status: '' });
-    setEditingVehicle(null);
-    setShowModal(false);
+  const statusMap = {
+    active: { className: 'text-green-600 font-bold', label: 'Hoạt động' },
+    inactive: { className: 'text-red-600 font-bold', label: 'Không hoạt động' },
+    maintenance: { className: 'text-yellow-500 font-bold', label: 'Bảo trì' },
   };
 
   const columns = [
@@ -120,7 +164,14 @@ const Vehicles = () => {
     { label: 'Loại xe', key: 'type' },
     { label: 'Số ghế', key: 'seats' },
     { label: 'Năm sản xuất', key: 'year' },
-    { label: 'Trạng thái', key: 'status' },
+    {
+      label: 'Trạng thái',
+      key: 'status',
+      render: (value) => {
+        const status = statusMap[value] || { className: '', label: value };
+        return <span className={status.className}>{status.label}</span>;
+      }
+    },
     { label: 'Hành động', key: 'actions' },
   ];
 
@@ -133,7 +184,16 @@ const Vehicles = () => {
             className="add-btn"
             onClick={() => {
               setEditingVehicle(null);
-              setNewVehicle({ licensePlate: '', type: '', seats: '', year: '', status: '' });
+              setNewVehicle({
+                name: '',
+                license_plate: '',
+                type: '',
+                model: '',
+                capacity: '',
+                manufacture_year: '',
+                status: '',
+                amenities: '',
+              });
               setShowModal(true);
             }}
           >
@@ -160,53 +220,91 @@ const Vehicles = () => {
           onClose={() => {
             setShowModal(false);
             setEditingVehicle(null);
-            setNewVehicle({ licensePlate: '', type: '', seats: '', year: '', status: '' });
+            setNewVehicle({
+              name: '',
+              license_plate: '',
+              type: '',
+              model: '',
+              capacity: '',
+              manufacture_year: '',
+              status: '',
+              amenities: '',
+            });
           }}
           onSubmit={handleSaveVehicle}
         >
+          {/* Form input fields */}
+          <div className="form-group">
+            <label>Tên xe:</label>
+            <input
+              type="text"
+              value={newVehicle.name}
+              onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
+            />
+          </div>
           <div className="form-group">
             <label>Biển số xe:</label>
             <input
               type="text"
-              value={newVehicle.licensePlate}
-              onChange={(e) => setNewVehicle({ ...newVehicle, licensePlate: e.target.value })}
-              placeholder="VD: 51A-12345"
+              value={newVehicle.license_plate}
+              onChange={(e) => setNewVehicle({ ...newVehicle, license_plate: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>Loại xe:</label>
-            <input
-              type="text"
+            <select
               value={newVehicle.type}
               onChange={(e) => setNewVehicle({ ...newVehicle, type: e.target.value })}
-              placeholder="VD: Ghế ngồi"
+            >
+              <option value="">-- Chọn loại xe --</option>
+              <option value="sleeper">Sleeper</option>
+              <option value="seater">Seater</option>
+              <option value="limousine">Limousine</option>
+              <option value="vip">VIP</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Model:</label>
+            <input
+              type="text"
+              value={newVehicle.model}
+              onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>Số ghế:</label>
             <input
               type="number"
-              value={newVehicle.seats}
-              onChange={(e) => setNewVehicle({ ...newVehicle, seats: e.target.value })}
-              placeholder="VD: 45"
+              value={newVehicle.capacity}
+              onChange={(e) => setNewVehicle({ ...newVehicle, capacity: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>Năm sản xuất:</label>
             <input
               type="number"
-              value={newVehicle.year}
-              onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
-              placeholder="VD: 2020"
+              value={newVehicle.manufacture_year}
+              onChange={(e) => setNewVehicle({ ...newVehicle, manufacture_year: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>Trạng thái:</label>
-            <input
-              type="text"
+            <select
               value={newVehicle.status}
               onChange={(e) => setNewVehicle({ ...newVehicle, status: e.target.value })}
-              placeholder="VD: Đang hoạt động"
+            >
+              <option value="">-- Chọn trạng thái --</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Không hoạt động</option>
+              <option value="maintenance">Bảo trì</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Tiện nghi:</label>
+            <input
+              type="text"
+              value={newVehicle.amenities}
+              onChange={(e) => setNewVehicle({ ...newVehicle, amenities: e.target.value })}
             />
           </div>
         </ReusableModal>

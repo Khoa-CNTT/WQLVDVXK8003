@@ -1,16 +1,16 @@
-import React from 'react';
 import Sidebar from '../components/Sidebar/Sidebar';
+import { Storage } from '../constant/storage';
 
-const Layout = ({ children }) => {
-  const currentDateTime = new Date().toLocaleString(); 
+const HomeAdminLayout = ({ children }) => {
+  const currentDateTime = new Date().toLocaleString();
   // Hàm đăng xuất
-    const handleLogout = () => {
-        if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
-            localStorage.removeItem('authData');
-            localStorage.removeItem('userInfo');
-            window.location.href = '/';
-        }
-    };
+  const handleLogout = () => {
+    if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
+      localStorage.removeItem(Storage.AUTH_DATA);
+      localStorage.removeItem('userInfo');
+      window.location.href = '/';
+    }
+  };
 
 
   return (
@@ -26,10 +26,10 @@ const Layout = ({ children }) => {
           </div>
         </header>
         {/* Nội dung trang thay đổi */}
-        {children} 
+        {children}
       </main>
     </div>
   );
 };
 
-export default Layout;
+export default HomeAdminLayout;

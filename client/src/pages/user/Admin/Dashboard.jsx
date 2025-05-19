@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 import HomeAdminLayout from '../../../layouts/AdminLayout';
+import { Storage } from '../../../constant/storage';
 
 // Đăng ký các thành phần ChartJS
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
@@ -50,7 +51,7 @@ const Dashboard = () => {
 
     // Hàm lấy token từ localStorage
     const getToken = () => {
-        const authData = localStorage.getItem('authData');
+        const authData = localStorage.getItem(Storage.AUTH_DATA);
         if (authData) {
             try {
                 const parsed = JSON.parse(authData);

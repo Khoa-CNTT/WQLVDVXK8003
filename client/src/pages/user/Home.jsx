@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './Home.css';
+import { Storage } from '../../constant/storage';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -169,7 +170,7 @@ const Home = () => {
       
       // Xóa tất cả dữ liệu người dùng khỏi localStorage
       localStorage.removeItem('userInfo');
-      localStorage.removeItem('authData');
+      localStorage.removeItem(Storage.AUTH_DATA);
       
       // Cập nhật state trong component
       setIsLoggedIn(false);
