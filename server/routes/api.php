@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BookingController;
-use App\Http\Controllers\API\RouteController;
+use App\Http\Controllers\API\LineController;
 use App\Http\Controllers\API\VehicleController;
 use App\Http\Controllers\API\DriverController;
 use App\Http\Controllers\API\TripController;
@@ -32,9 +32,9 @@ Route::prefix('v1')->group(function () {
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
     // Tìm kiếm và hiển thị thông tin tuyến đường
-    Route::get('routes/search', [RouteController::class, 'search']);
-    Route::get('routes', [RouteController::class, 'index']);
-    Route::get('routes/{id}', [RouteController::class, 'show']);
+    Route::get('routes/search', [LineController::class, 'search']);
+    Route::get('routes', [LineController::class, 'index']);
+    Route::get('routes/{id}', [LineController::class, 'show']);
 
     // Tìm kiếm và hiển thị chuyến xe
     Route::get('trips/search', [TripController::class, 'search']);
@@ -71,7 +71,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 // Route group cho các API chỉ dành cho admin
 Route::prefix('v1/admin')->middleware(['auth:sanctum','admin'])->group(function () {
     // Quản lý tuyến đường
-    Route::apiResource('routes', RouteController::class);
+    Route::apiResource('routes', LineController::class);
 
     // Quản lý phương tiện
     Route::apiResource('vehicles', VehicleController::class);

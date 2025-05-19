@@ -8,7 +8,7 @@ use App\Models\Route;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 
-class RouteController extends Controller
+class LineController extends Controller
 {
     /**
      * Hiển thị danh sách tuyến đường

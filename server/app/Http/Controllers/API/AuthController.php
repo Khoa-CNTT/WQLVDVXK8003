@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Cache;
+
 class AuthController extends Controller
 {
     /**
@@ -132,60 +134,63 @@ class AuthController extends Controller
     }
 
     /**
-     * Gửi link đặt lại mật khẩu
+     * Gửi mã xác thực qua số điện thoại
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function forgotPassword(Request $request)
-{
-    try {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-        ]);
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'phone' => 'required|string|max:20',
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lỗi xác thực dữ liệu',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Kiểm tra xem số điện thoại có tồn tại trong hệ thống không
+            $user = User::where('phone', $request->phone)->first();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy tài khoản với số điện thoại này'
+                ], 404);
+            }
+
+            // Tạo mã xác thực ngẫu nhiên 6 số
+            $verificationCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Lưu mã xác thực vào cache với thời hạn 5 phút
+            $cacheKey = 'password_reset_' . $request->phone;
+            Cache::put($cacheKey, $verificationCode, now()->addMinutes(5));
+
+            // TODO: Gửi mã xác thực qua SMS
+            // Trong môi trường development, trả về mã để test
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã gửi mã xác thực qua số điện thoại',
+                'data' => [
+                    'verification_code' => $verificationCode // Chỉ trả về trong môi trường development
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error in forgotPassword: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi xác thực dữ liệu',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Lỗi server: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Kiểm tra xem email có tồn tại trong hệ thống không
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy tài khoản với email này'
-            ], 404);
-        }
-
-        // Ghi log - đúng cú pháp
-        \Illuminate\Support\Facades\Log::info('Sending password reset email to: ' . $request->email);
-
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
-
-        \Illuminate\Support\Facades\Log::info('Password reset status: ' . $status);
-
-        return $status === Password::RESET_LINK_SENT
-            ? response()->json(['success' => true, 'message' => 'Đã gửi email đặt lại mật khẩu'])
-            : response()->json(['success' => false, 'message' => __($status)], 400);
-    } catch (\Exception $e) {
-        // Ghi log lỗi - đúng cú pháp
-        \Illuminate\Support\Facades\Log::error('Error in forgotPassword: ' . $e->getMessage());
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Lỗi server: ' . $e->getMessage()
-        ], 500);
     }
-}
 
     /**
-     * Đặt lại mật khẩu
+     * Xác thực mã và đặt lại mật khẩu
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -193,8 +198,8 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'token' => 'required',
-            'email' => 'required|email',
+            'phone' => 'required|string|max:20',
+            'verification_code' => 'required|string|size:6',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -206,19 +211,37 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password)
-                ]);
-                $user->save();
-            }
-        );
+        // Kiểm tra mã xác thực
+        $cacheKey = 'password_reset_' . $request->phone;
+        $storedCode = Cache::get($cacheKey);
 
-        return $status === Password::PASSWORD_RESET
-            ? response()->json(['success' => true, 'message' => 'Đặt lại mật khẩu thành công'])
-            : response()->json(['success' => false, 'message' => 'Không thể đặt lại mật khẩu'], 400);
+        if (!$storedCode || $storedCode !== $request->verification_code) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã xác thực không hợp lệ hoặc đã hết hạn'
+            ], 400);
+        }
+
+        // Tìm user theo số điện thoại
+        $user = User::where('phone', $request->phone)->first();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy tài khoản'
+            ], 404);
+        }
+
+        // Cập nhật mật khẩu mới
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Xóa mã xác thực khỏi cache
+        Cache::forget($cacheKey);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đặt lại mật khẩu thành công'
+        ]);
     }
 
     /**
@@ -249,5 +272,46 @@ class AuthController extends Controller
                 ]
             ]
         ], 200);
+    }
+
+    /**
+     * Đổi mật khẩu
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi xác thực dữ liệu',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = $request->user();
+
+        // Kiểm tra mật khẩu hiện tại
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mật khẩu hiện tại không chính xác'
+            ], 400);
+        }
+
+        // Cập nhật mật khẩu mới
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mật khẩu đã được thay đổi thành công'
+        ]);
     }
 }

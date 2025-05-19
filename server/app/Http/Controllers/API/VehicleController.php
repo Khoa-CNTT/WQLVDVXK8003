@@ -59,7 +59,7 @@ class VehicleController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'license_plate' => 'required|string|max:20|unique:vehicles',
-            'type' => 'required|in:standard,limousine,sleeper',
+            'type' => 'required|in:standard,limousine,sleeper,vip,seater',
             'capacity' => 'required|integer|min:1',
             'manufacture_year' => 'nullable|integer|min:1950|max:' . date('Y'),
             'last_maintenance' => 'nullable|date',

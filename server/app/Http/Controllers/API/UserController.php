@@ -234,65 +234,65 @@ class UserController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
-{
-    try {
-        // Sử dụng Request để lấy người dùng đang xác thực
-        $currentUserId = request()->user() ? request()->user()->id : null;
+    {
+        try {
+            // Sử dụng Request để lấy người dùng đang xác thực
+            $currentUserId = request()->user() ? request()->user()->id : null;
 
-        // Nếu có người dùng đang đăng nhập và ID khớp với ID đang xóa
-        if ($currentUserId && $id == $currentUserId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể xóa tài khoản đang đăng nhập'
-            ], 400);
-        }
+            // Nếu có người dùng đang đăng nhập và ID khớp với ID đang xóa
+            if ($currentUserId && $id == $currentUserId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể xóa tài khoản đang đăng nhập'
+                ], 400);
+            }
 
-        $user = User::findOrFail($id);
+            $user = User::findOrFail($id);
 
-        // Kiểm tra lịch sử đặt vé
-        $hasBookings = $user->bookings()->exists();
+            // Kiểm tra lịch sử đặt vé
+            $hasBookings = $user->bookings()->exists();
 
-        if ($hasBookings) {
-            // Thay vì xóa, chỉ đánh dấu là inactive
-            $user->status = 'inactive';
-            $user->save();
+            if ($hasBookings) {
+                // Thay vì xóa, chỉ đánh dấu là inactive
+                $user->status = 'inactive';
+                $user->save();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Người dùng đã được vô hiệu hóa vì có lịch sử đặt vé'
-            ]);
-        }
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Người dùng đã được vô hiệu hóa vì có lịch sử đặt vé'
+                ]);
+            }
 
-        $user->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Xóa người dùng thành công'
-        ]);
-    }catch (\Exception $e) {
-        // Xử lý ngoại lệ, bỏ qua phần kiểm tra người dùng hiện tại
-        $user = User::findOrFail($id);
-
-        // Kiểm tra lịch sử đặt vé
-        $hasBookings = $user->bookings()->exists();
-
-        if ($hasBookings) {
-            // Thay vì xóa, chỉ đánh dấu là inactive
-            $user->status = 'inactive';
-            $user->save();
+            $user->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Người dùng đã được vô hiệu hóa vì có lịch sử đặt vé'
+                'message' => 'Xóa người dùng thành công'
+            ]);
+        } catch (\Exception $e) {
+            // Xử lý ngoại lệ, bỏ qua phần kiểm tra người dùng hiện tại
+            $user = User::findOrFail($id);
+
+            // Kiểm tra lịch sử đặt vé
+            $hasBookings = $user->bookings()->exists();
+
+            if ($hasBookings) {
+                // Thay vì xóa, chỉ đánh dấu là inactive
+                $user->status = 'inactive';
+                $user->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Người dùng đã được vô hiệu hóa vì có lịch sử đặt vé'
+                ]);
+            }
+
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Xóa người dùng thành công'
             ]);
         }
-
-        $user->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Xóa người dùng thành công'
-        ]);
     }
-}
 }
