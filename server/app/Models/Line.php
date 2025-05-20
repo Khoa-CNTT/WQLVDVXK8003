@@ -5,15 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Route extends Model
+class Line extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'departure',
         'destination',
@@ -24,9 +19,6 @@ class Route extends Model
         'status',
     ];
 
-    /**
-     * Get the trips for the route.
-     */
     public function trips()
     {
         return $this->hasMany(Trip::class);

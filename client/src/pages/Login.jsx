@@ -61,7 +61,14 @@ const Login = () => {
       </form>
 
       <div className="forgot-password">
-        <a href="#">Quên mật khẩu?</a>
+        <button
+          type="button"
+          className="forgot-password-link"
+          onClick={() => navigate('/forgot-password', { replace: true })}
+          style={{ background: 'none', border: 'none', color: '#ff6600', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+        >
+          Quên mật khẩu?
+        </button>
       </div>
 
       <div className="register-link">

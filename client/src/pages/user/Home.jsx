@@ -99,7 +99,7 @@ const Home = () => {
       if (newState && chatMessages.length === 0) {
         // Add welcome message if opening for first time
         setChatMessages([{
-          text: "Xin chào! Tôi là trợ lý ảo của Phương Thanh Express. Tôi có thể giúp gì cho bạn?",
+          text: "Xin chào! Tôi là chatbot của Nhà xe Phương Thanh.<br>Tôi có thể giúp bạn:<br>1. Đặt vé xe<br>2. Xem lịch trình<br>3. Tìm hiểu về chúng tôi<br>4. Hỗ trợ khác<br>Bạn cần tôi giúp gì ạ?",
           type: "bot"
         }]);
       }
@@ -448,7 +448,7 @@ const Home = () => {
                 key={index} 
                 className={`message ${message.type === "user" ? "user-message" : "bot-message"}`}
               >
-                {message.text}
+                <span dangerouslySetInnerHTML={{ __html: message.text }} />
               </div>
             ))}
           </div>

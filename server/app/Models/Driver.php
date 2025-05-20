@@ -23,6 +23,7 @@ class Driver extends Model
         'address',
         'birth_date',
         'status',
+        'experience_years',
     ];
 
     /**

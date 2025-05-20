@@ -138,6 +138,7 @@ class UserController extends Controller
             'phone' => 'required|string|max:20|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,id',
+            'status' => 'required|in:active,inactive,banned',
         ]);
 
         if ($validator->fails()) {
@@ -154,6 +155,7 @@ class UserController extends Controller
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'role_id' => $request->role_id,
+            'status' => $request->status,
         ]);
 
         return response()->json([
@@ -196,7 +198,7 @@ class UserController extends Controller
             'phone' => 'required|string|max:20|unique:users,phone,' . $id,
             'password' => 'nullable|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,id',
-            'status' => 'required|in:active,inactive',
+            'status' => 'required|in:active,inactive,banned',
         ]);
 
         if ($validator->fails()) {

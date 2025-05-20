@@ -30,7 +30,7 @@ return new class extends Migration
             }
 
             if (!Schema::hasColumn('users', 'status')) {
-                $table->enum('status', ['active', 'inactive'])->default('active');
+                $table->enum('status', ['active', 'inactive', 'banned'])->default('active');
             }
 
             if (!Schema::hasColumn('users', 'last_login_at')) {

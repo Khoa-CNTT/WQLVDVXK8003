@@ -93,6 +93,21 @@ const Customers = () => {
   };
 
   const handleSaveCustomer = () => {
+    // Kiểm tra trùng email/sđt (loại trừ user đang sửa)
+    const isEmailDuplicate = customers.some(
+      (c) => c.email === newCustomer.email && (!editingCustomer || c.id !== editingCustomer.id)
+    );
+    const isPhoneDuplicate = customers.some(
+      (c) => c.phone === newCustomer.phone && (!editingCustomer || c.id !== editingCustomer.id)
+    );
+    if (isEmailDuplicate) {
+      alert('Email đã tồn tại!');
+      return;
+    }
+    if (isPhoneDuplicate) {
+      alert('Số điện thoại đã tồn tại!');
+      return;
+    }
     if (editingCustomer) {
       setCustomers(customers.map((c) =>
         c.id === editingCustomer.id ? { ...editingCustomer, ...newCustomer } : c
@@ -119,13 +134,15 @@ const Customers = () => {
       render: (value) => {
         const statusMap = {
           active: 'Hoạt động',
-          blocked: 'Tạm khoá',
+          inactive: 'Ngừng hoạt động',
+          banned: 'Bị khoá',
         };
         const classMap = {
           active: 'status-success',
-          blocked: 'status-canceled',
+          inactive: 'status-pending',
+          banned: 'status-canceled',
         };
-        return <span className={classMap[value]}>{statusMap[value]}</span>;
+        return <span className={classMap[value] || 'status-default'}>{statusMap[value] || value}</span>;
       },
     },
     {

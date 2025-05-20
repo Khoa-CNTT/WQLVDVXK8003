@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('trips', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('route_id')->constrained()->onDelete('restrict');
+            $table->foreignId('line_id')->constrained()->onDelete('restrict');
             $table->foreignId('vehicle_id')->constrained()->onDelete('restrict');
             $table->foreignId('driver_id')->constrained()->onDelete('restrict');
             $table->dateTime('departure_time');

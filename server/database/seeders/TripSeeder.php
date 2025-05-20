@@ -5,7 +5,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Trip;
-use App\Models\Route;
+use App\Models\Line;
 use App\Models\Vehicle;
 use App\Models\Driver;
 use Carbon\Carbon;
@@ -23,7 +23,7 @@ class TripSeeder extends Seeder
         // Không xóa dữ liệu hiện có, chỉ thêm mới
 
         // Lấy dữ liệu
-        $routes = Route::all();
+        $routes = Line::all();
 
         // Kiểm tra xem có tuyến nào không
         if ($routes->isEmpty()) {
@@ -69,7 +69,7 @@ class TripSeeder extends Seeder
                     $departureDateTime = Carbon::parse("$dateString $departureTime");
 
                     // Kiểm tra xem chuyến đã tồn tại chưa
-                    $existingTrip = Trip::where('route_id', $route->id)
+                    $existingTrip = Trip::where('line_id', $route->id)
                         ->where('departure_time', $departureDateTime)
                         ->first();
 
@@ -95,7 +95,7 @@ class TripSeeder extends Seeder
 
                     try {
                         Trip::create([
-                            'route_id' => $route->id,
+                            'line_id' => $route->id,
                             'vehicle_id' => $vehicle->id,
                             'driver_id' => $driver->id,
                             'departure_time' => $departureDateTime,

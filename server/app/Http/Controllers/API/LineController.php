@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Route;
+use App\Models\Line;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 
@@ -18,7 +18,7 @@ class LineController extends Controller
     public function index()
     {
         return Cache::remember('routes.all', 3600, function () {
-            return Route::with(['trips' => function ($query) {
+            return Line::with(['trips' => function ($query) {
                 $query->whereDate('departure_time', '>=', now());
             }])->get();
         });
@@ -35,7 +35,7 @@ class LineController extends Controller
         $cacheKey = 'routes.search.' . md5(json_encode($request->all()));
 
         return Cache::remember($cacheKey, 1800, function () use ($request) {
-            return Route::query()
+            return Line::query()
                 ->when($request->from, function ($query, $from) {
                     return $query->where('departure_location', 'like', "%{$from}%");
                 })
@@ -76,7 +76,7 @@ class LineController extends Controller
             ], 422);
         }
 
-        $route = Route::create([
+        $route = Line::create([
             'departure' => $request->departure,
             'destination' => $request->destination,
             'distance' => $request->distance,
@@ -104,7 +104,7 @@ class LineController extends Controller
     public function show($id)
     {
         return Cache::remember('routes.' . $id, 3600, function () use ($id) {
-            return Route::with(['trips' => function ($query) {
+            return Line::with(['trips' => function ($query) {
                 $query->whereDate('departure_time', '>=', now())
                       ->orderBy('departure_time');
             }])->findOrFail($id);
@@ -138,7 +138,7 @@ class LineController extends Controller
             ], 422);
         }
 
-        $route = Route::findOrFail($id);
+        $route = Line::findOrFail($id);
         $route->update([
             'departure' => $request->departure,
             'destination' => $request->destination,
@@ -166,7 +166,7 @@ class LineController extends Controller
      */
     public function destroy($id)
     {
-        $route = Route::findOrFail($id);
+        $route = Line::findOrFail($id);
 
         // Kiểm tra xem có chuyến xe nào đang sử dụng tuyến đường này không
         if ($route->trips()->exists()) {

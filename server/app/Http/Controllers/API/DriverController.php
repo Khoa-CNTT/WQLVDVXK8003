@@ -63,6 +63,7 @@ class DriverController extends Controller
             'address' => 'nullable|string',
             'birth_date' => 'nullable|date|before:18 years ago',
             'status' => 'required|in:active,inactive',
+            'experience_years' => 'nullable|integer|min:0|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -82,6 +83,7 @@ class DriverController extends Controller
             'address' => $request->address,
             'birth_date' => $request->birth_date,
             'status' => $request->status,
+            'experience_years' => $request->experience_years,
         ]);
 
         return response()->json([
@@ -152,6 +154,7 @@ class DriverController extends Controller
             'address' => 'nullable|string',
             'birth_date' => 'nullable|date',
             'status' => 'required|in:active,inactive',
+            'experience_years' => 'nullable|integer|min:0|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -171,6 +174,7 @@ class DriverController extends Controller
             'address' => $request->address,
             'birth_date' => $request->birth_date,
             'status' => $request->status,
+            'experience_years' => $request->experience_years,
         ]);
 
         return response()->json([

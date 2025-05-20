@@ -1,12 +1,12 @@
 <?php
-// database/seeders/RouteSeeder.php
+// database/seeders/LineSeeder.php
 
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Route;
+use App\Models\Line;
 
-class RouteSeeder extends Seeder
+class LineSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -15,7 +15,7 @@ class RouteSeeder extends Seeder
      */
     public function run()
     {
-        $routes = [
+        $lines = [
             [
                 'departure' => 'Đà Nẵng',
                 'destination' => 'Quảng Bình',
@@ -90,8 +90,8 @@ class RouteSeeder extends Seeder
             ],
         ];
 
-        foreach ($routes as $route) {
-            Route::create($route);
+        foreach ($lines as $line) {
+            Line::create($line);
         }
     }
 }

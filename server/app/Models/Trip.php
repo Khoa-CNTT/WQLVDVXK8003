@@ -15,7 +15,7 @@ class Trip extends Model
      * @var array
      */
     protected $fillable = [
-        'route_id',
+        'line_id',
         'vehicle_id',
         'driver_id',
         'departure_time',
@@ -37,11 +37,11 @@ class Trip extends Model
     ];
 
     /**
-     * Get the route that owns the trip.
+     * Get the line that owns the trip.
      */
-    public function route()
+    public function line()
     {
-        return $this->belongsTo(Route::class);
+        return $this->belongsTo(Line::class);
     }
 
     /**

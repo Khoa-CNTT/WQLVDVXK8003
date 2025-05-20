@@ -14,7 +14,7 @@ const Drivers = () => {
     name: '',
     phone: '',
     birthdate: '',
-    experience: '',
+    experience_years: '',
     status: 'active',
   });
 
@@ -29,7 +29,7 @@ const Drivers = () => {
             name: 'Nguyễn Văn A',
             phone: '0909123456',
             birthdate: '1985-05-20',
-            experience: '10 năm',
+            experience_years: 10,
             status: 'active',
           },
           {
@@ -37,7 +37,7 @@ const Drivers = () => {
             name: 'Trần Văn B',
             phone: '0912123456',
             birthdate: '1990-08-15',
-            experience: '7 năm',
+            experience_years: 7,
             status: 'on_leave',
           },
           {
@@ -45,7 +45,7 @@ const Drivers = () => {
             name: 'Lê Văn C',
             phone: '0922123456',
             birthdate: '1982-12-01',
-            experience: '15 năm',
+            experience_years: 15,
             status: 'inactive',
           },
           {
@@ -53,7 +53,7 @@ const Drivers = () => {
             name: 'Phạm Văn D',
             phone: '0933456789',
             birthdate: '1988-03-22',
-            experience: '9 năm',
+            experience_years: 9,
             status: 'active',
           },
           {
@@ -61,7 +61,7 @@ const Drivers = () => {
             name: 'Đỗ Thị E',
             phone: '0944567890',
             birthdate: '1992-11-10',
-            experience: '5 năm',
+            experience_years: 5,
             status: 'on_leave',
           },
           {
@@ -69,7 +69,7 @@ const Drivers = () => {
             name: 'Bùi Văn F',
             phone: '0955678901',
             birthdate: '1980-07-07',
-            experience: '20 năm',
+            experience_years: 20,
             status: 'inactive',
           }
         ]);
@@ -111,7 +111,7 @@ const Drivers = () => {
       setDrivers([...drivers, { id: newId, ...newDriver }]);
     }
 
-    setNewDriver({ name: '', phone: '', birthdate: '', experience: '', status: 'active' });
+    setNewDriver({ name: '', phone: '', birthdate: '', experience_years: '', status: 'active' });
     setEditingDriver(null);
     setShowModal(false);
   };
@@ -121,7 +121,7 @@ const Drivers = () => {
     { key: 'name', label: 'Họ tên' },
     { key: 'phone', label: 'Số điện thoại' },
     { key: 'birthdate', label: 'Ngày sinh' },
-    { key: 'experience', label: 'Kinh nghiệm' },
+    { key: 'experience_years', label: 'Kinh nghiệm', render: (value) => value ? `${value} năm` : '' },
     {
       key: 'status',
       label: 'Trạng thái',
@@ -164,7 +164,7 @@ const Drivers = () => {
                 name: '',
                 phone: '',
                 birthdate: '',
-                experience: '',
+                experience_years: '',
                 status: 'active',
               });
               setShowModal(true);
@@ -186,7 +186,7 @@ const Drivers = () => {
           onClose={() => {
             setShowModal(false);
             setEditingDriver(null);
-            setNewDriver({ name: '', phone: '', birthdate: '', experience: '', status: 'active' });
+            setNewDriver({ name: '', phone: '', birthdate: '', experience_years: '', status: 'active' });
           }}
           onSubmit={handleSaveDriver}
         >
@@ -217,12 +217,14 @@ const Drivers = () => {
             />
           </div>
           <div className="form-group">
-            <label>Kinh nghiệm:</label>
+            <label>Kinh nghiệm (năm):</label>
             <input
-              type="text"
-              value={newDriver.experience}
-              onChange={(e) => setNewDriver({ ...newDriver, experience: e.target.value })}
-              placeholder="VD: 5 năm"
+              type="number"
+              min="0"
+              max="100"
+              value={newDriver.experience_years}
+              onChange={(e) => setNewDriver({ ...newDriver, experience_years: e.target.value })}
+              placeholder="VD: 5"
             />
           </div>
           <div className="form-group">

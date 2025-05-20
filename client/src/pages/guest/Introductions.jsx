@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 import './Introductions.css';
 
@@ -105,7 +106,7 @@ const Introductions = () => {
       if (newState && chatMessages.length === 0) {
         // Add welcome message if opening for first time
         setChatMessages([{
-          text: "Xin chào! Tôi là trợ lý ảo của Phương Thanh Express. Tôi có thể giúp gì cho bạn?",
+          text: "Xin chào! Tôi là chatbot của Nhà xe Phương Thanh.<br>Tôi có thể giúp bạn:<br>1. Đặt vé xe<br>2. Xem lịch trình<br>3. Tìm hiểu về chúng tôi<br>4. Hỗ trợ khác<br>Bạn cần tôi giúp gì ạ?",
           type: "bot"
         }]);
       }
@@ -117,7 +118,7 @@ const Introductions = () => {
     setChatInput(e.target.value);
   };
 
-  const handleChatSubmit = (e) => {
+  const handleChatSubmit = async (e) => {
     if (e.key === "Enter" && chatInput.trim()) {
       const userMessage = chatInput.trim();
       
@@ -126,26 +127,15 @@ const Introductions = () => {
       setChatInput("");
       
       // Generate bot response (simplified version)
-      setTimeout(() => {
-        let botResponse = "Xin lỗi, tôi chưa hiểu câu hỏi của bạn. Bạn có thể hỏi cụ thể hơn hoặc liên hệ hotline 0905.999999 để được hỗ trợ!";
-        
-        const keywords = {
-          "xin chào": "Chào bạn! Phương Thanh Express rất vui được hỗ trợ bạn hôm nay.",
-          "đặt vé": "Bạn có thể đặt vé trực tuyến qua mục 'ĐẶT VÉ XE TRỰC TUYẾN' trên trang chủ hoặc gọi hotline 0905.3333.33.",
-          "gửi hàng": "Để gửi hàng, vui lòng liên hệ 0905.888.888 (Anh Mạnh) hoặc đến trực tiếp văn phòng tại Đà Nẵng.",
-          "tuyến": "Hiện tại chúng tôi có các tuyến: Đà Nẵng - Quảng Bình, Đà Nẵng - Nghệ An, Đà Nẵng - Hà Giang, Đà Nẵng - HCM.",
-          "khuyến mãi": "Chúng tôi có chương trình giảm giá cho khách hàng thân thiết (10-40%) và Blind Box với quà tặng hấp dẫn như iPhone 15."
-        };
-        
-        for (const [key, value] of Object.entries(keywords)) {
-          if (userMessage.toLowerCase().includes(key)) {
-            botResponse = value;
-            break;
-          }
-        }
-        
+      try {
+        const response = await axios.post('/api/v1/chatbot/query', { query: userMessage, session_id: '1' });
+        // Đọc message an toàn từ nhiều cấu trúc response khác nhau
+        const botResponse = response.data?.message || response.data?.data?.message || response.data?.data?.data?.message || "Bot không trả lời.";
         setChatMessages(prev => [...prev, { text: botResponse, type: "bot" }]);
-      }, 500);
+      } catch (error) {
+        console.error('Error fetching bot response:', error);
+        showNotification('Đã xảy ra lỗi khi truy vấn bot. Vui lòng thử lại sau.', 'error');
+      }
     }
   };
 
@@ -387,7 +377,7 @@ const Introductions = () => {
                 key={index} 
                 className={`message ${message.type === "user" ? "user-message" : "bot-message"}`}
               >
-                {message.text}
+                <span dangerouslySetInnerHTML={{ __html: message.text }} />
               </div>
             ))}
           </div>
