@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import HomeAdminLayout from '../../../layouts/AdminLayout';
-import ReusableModal from '../../../components/ReusableModal/ReusableModal';
-import ReusableTable from '../../../components/ReusableTable/ReusableTable';
-import { useApi } from '../../../hooks/useApi';
-import { fetchSortedData } from '../../../utils/fetchSortedData';
+import HomeAdminLayout from '../../../../layouts/AdminLayout';
+import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
+import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
+import { useApi } from '../../../../hooks/useApi';
+import { fetchSortedData } from '../../../../utils/fetchSortedData';
 
 const Vehicles = () => {
   const api = useApi();

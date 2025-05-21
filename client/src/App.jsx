@@ -4,7 +4,7 @@ import { ProtectedRoute } from './contexts/ProtectedRoute';
 import publicRoutes from './routes/publicRoutes';
 import userRoutes from './routes/userRoutes';
 import adminRoutes from './routes/adminRoutes';
-import Dashboard from './pages/user/Admin/Dashboard';
+import Dashboard from './pages/user/Admin/dashboard/Dashboard';
 import Home from './pages/user/Home';
 import PublicRoute from './contexts/PublicRoute';
 

@@ -3,8 +3,8 @@ import './Dashboard.css';
 import { Link } from 'react-router-dom';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
-import HomeAdminLayout from '../../../layouts/AdminLayout';
-import { Storage } from '../../../constant/storage';
+import HomeAdminLayout from '../../../../layouts/AdminLayout';
+import { Storage } from '../../../../constant/storage';
 
 // Đăng ký các thành phần ChartJS
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);

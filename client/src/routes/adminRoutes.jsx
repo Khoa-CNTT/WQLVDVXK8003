@@ -1,12 +1,13 @@
-import Dashboard from '../pages/user/Admin/Dashboard';
-import TicketCrud from '../pages/user/Admin/TicketCrud';
-import Vehicles from '../pages/user/Admin/Vehicles';
+import Dashboard from '../pages/user/Admin/dashboard/Dashboard';
+import TicketCrud from '../pages/user/Admin/ticketsCrud/TicketCrud';
+import Vehicles from '../pages/user/Admin/vehicles/Vehicles';
 import { ProtectedRoute } from '../contexts/ProtectedRoute';
-import Customers from '../pages/user/Admin/Customers';
-import Amenities from '../pages/user/Admin/Amenities';
-import Drivers from '../pages/user/Admin/Drivers';
-import Line from '../pages/user/Admin/Line';
-import Trips from '../pages/user/Admin/Trips';
+import Customers from '../pages/user/Admin/customers/Customers';
+import Amenities from '../pages/user/Admin/amenities/Amenities';
+import Drivers from '../pages/user/Admin/drivers/Drivers';
+import Line from '../pages/user/Admin/line/Line';
+import Trips from '../pages/user/Admin/trips/Trips';
+
 
 const adminRoutes = [
   {

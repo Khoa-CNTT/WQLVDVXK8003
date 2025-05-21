@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import HomeAdminLayout from '../../../layouts/AdminLayout';
-import ReusableModal from '../../../components/ReusableModal/ReusableModal'; // Đường dẫn modal của bạn
-import ReusableTable from '../../../components/ReusableTable/ReusableTable';
+import HomeAdminLayout from '../../../../layouts/AdminLayout';
+import ReusableModal from '../../../../components/ReusableModal/ReusableModal'; // Đường dẫn modal của bạn
+import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
 
 const Line = () => {
 const [lines, setLines] = useState([

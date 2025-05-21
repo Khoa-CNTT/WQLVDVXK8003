@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import HomeAdminLayout from '../../../layouts/AdminLayout';
-import ReusableModal from '../../../components/ReusableModal/ReusableModal';
-import ReusableTable from '../../../components/ReusableTable/ReusableTable';
+import HomeAdminLayout from '../../../../layouts/AdminLayout';
+import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
+import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
 
 const Trips = () => {
   const [trips, setTrips] = useState([

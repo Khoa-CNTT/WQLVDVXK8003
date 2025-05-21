@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './TicketCrud.css';
-import HomeAdminLayout from '../../../layouts/AdminLayout';
-import ReusableModal from '../../../components/ReusableModal/ReusableModal';
-import { Storage } from '../../../constant/storage';
+import HomeAdminLayout from '../../../../layouts/AdminLayout';
+import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
+import { Storage } from '../../../../constant/storage';
 
 const TicketCrud = () => {
     const [currentDateTime, setCurrentDateTime] = useState('');
