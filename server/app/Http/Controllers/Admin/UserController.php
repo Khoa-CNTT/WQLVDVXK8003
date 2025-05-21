@@ -107,9 +107,11 @@ class UserController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi xác thực dữ liệu',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         $data = [
@@ -121,15 +123,17 @@ class UserController extends Controller
             'status' => $request->status,
         ];
 
-        // Chỉ cập nhật mật khẩu nếu được cung cấp
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'Thông tin người dùng đã được cập nhật thành công.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật thông tin thành công',
+            'data' => $user
+        ]);
     }
 
     /**

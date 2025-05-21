@@ -111,35 +111,34 @@ const Home = () => {
     setChatInput(e.target.value);
   };
 
-  const handleChatSubmit = (e) => {
+  const handleChatSubmit = async (e) => {
     if (e.key === "Enter" && chatInput.trim()) {
       const userMessage = chatInput.trim();
-      
-      // Add user message to chat
-      setChatMessages(prev => [...prev, { text: userMessage, type: "user" }]);
+      setChatMessages(prev => [...prev, { text: userMessage, type: "user" }, { text: "Đang trả lời...", type: "loading" }]);
       setChatInput("");
-      
-      // Generate bot response (simplified version)
-      setTimeout(() => {
-        let botResponse = "Xin lỗi, tôi chưa hiểu câu hỏi của bạn. Bạn có thể hỏi cụ thể hơn hoặc liên hệ hotline 0905.999999 để được hỗ trợ!";
-        
-        const keywords = {
-          "xin chào": "Chào bạn! Phương Thanh Express rất vui được hỗ trợ bạn hôm nay.",
-          "đặt vé": "Bạn có thể đặt vé trực tuyến qua mục 'ĐẶT VÉ XE TRỰC TUYẾN' trên trang chủ hoặc gọi hotline 0905.3333.33.",
-          "gửi hàng": "Để gửi hàng, vui lòng liên hệ 0905.888.888 (Anh Mạnh) hoặc đến trực tiếp văn phòng tại Đà Nẵng.",
-          "tuyến": "Hiện tại chúng tôi có các tuyến: Đà Nẵng - Quảng Bình, Đà Nẵng - Nghệ An, Đà Nẵng - Hà Giang, Đà Nẵng - HCM.",
-          "khuyến mãi": "Chúng tôi có chương trình giảm giá cho khách hàng thân thiết (10-40%) và Blind Box với quà tặng hấp dẫn như iPhone 15."
-        };
-        
-        for (const [key, value] of Object.entries(keywords)) {
-          if (userMessage.toLowerCase().includes(key)) {
-            botResponse = value;
-            break;
-          }
-        }
-        
-        setChatMessages(prev => [...prev, { text: botResponse, type: "bot" }]);
-      }, 500);
+      try {
+        const response = await fetch('/api/v1/chatbot/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: userMessage, session_id: '1' })
+        });
+        const data = await response.json();
+        const botResponse = data?.data?.data?.message || data?.data?.message || data?.message || "Bot không trả lời.";
+        setChatMessages(prev => {
+          // Thay thế tin nhắn loading cuối cùng bằng câu trả lời thực tế
+          const newMsgs = [...prev];
+          const idx = newMsgs.findIndex(m => m.type === 'loading');
+          if (idx !== -1) newMsgs[idx] = { text: botResponse, type: "bot" };
+          return newMsgs;
+        });
+      } catch (error) {
+        setChatMessages(prev => {
+          const newMsgs = [...prev];
+          const idx = newMsgs.findIndex(m => m.type === 'loading');
+          if (idx !== -1) newMsgs[idx] = { text: "Đã xảy ra lỗi khi truy vấn bot. Vui lòng thử lại sau.", type: "bot" };
+          return newMsgs;
+        });
+      }
     }
   };
 

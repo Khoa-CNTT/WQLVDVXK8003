@@ -121,20 +121,24 @@ const Introductions = () => {
   const handleChatSubmit = async (e) => {
     if (e.key === "Enter" && chatInput.trim()) {
       const userMessage = chatInput.trim();
-      
-      // Add user message to chat
-      setChatMessages(prev => [...prev, { text: userMessage, type: "user" }]);
+      setChatMessages(prev => [...prev, { text: userMessage, type: "user" }, { text: "Đang trả lời...", type: "loading" }]);
       setChatInput("");
-      
-      // Generate bot response (simplified version)
       try {
         const response = await axios.post('/api/v1/chatbot/query', { query: userMessage, session_id: '1' });
-        // Đọc message an toàn từ nhiều cấu trúc response khác nhau
         const botResponse = response.data?.message || response.data?.data?.message || response.data?.data?.data?.message || "Bot không trả lời.";
-        setChatMessages(prev => [...prev, { text: botResponse, type: "bot" }]);
+        setChatMessages(prev => {
+          const newMsgs = [...prev];
+          const idx = newMsgs.findIndex(m => m.type === 'loading');
+          if (idx !== -1) newMsgs[idx] = { text: botResponse, type: "bot" };
+          return newMsgs;
+        });
       } catch (error) {
-        console.error('Error fetching bot response:', error);
-        showNotification('Đã xảy ra lỗi khi truy vấn bot. Vui lòng thử lại sau.', 'error');
+        setChatMessages(prev => {
+          const newMsgs = [...prev];
+          const idx = newMsgs.findIndex(m => m.type === 'loading');
+          if (idx !== -1) newMsgs[idx] = { text: "Đã xảy ra lỗi khi truy vấn bot. Vui lòng thử lại sau.", type: "bot" };
+          return newMsgs;
+        });
       }
     }
   };

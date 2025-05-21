@@ -13,6 +13,7 @@ use App\Http\Controllers\API\SeatController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ChatbotController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -86,7 +87,7 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum','admin'])->group(function 
     Route::apiResource('seats', SeatController::class);
 
     // Quản lý người dùng
-    Route::apiResource('users', UserController::class);
+    Route::apiResource('users', AdminUserController::class);
 
     // Thống kê báo cáo
     Route::get('reports/revenue', [BookingController::class, 'revenueReport']);

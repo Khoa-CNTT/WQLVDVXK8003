@@ -37,6 +37,8 @@ class ChatbotService
     {
         $query = mb_strtolower($query);
 
+        Log::info('Chatbot query received', ['query' => $query]);
+
         // Danh sách từ khóa và câu trả lời
         $faq = [
             [
@@ -273,7 +275,8 @@ class ChatbotService
 
         foreach ($faq as $item) {
             foreach ($item['keywords'] as $keyword) {
-                if (mb_strpos($query, mb_strtolower($keyword)) !== false) {
+                if (trim($query) === mb_strtolower(trim($keyword))) {
+                    Log::info('Chatbot FAQ matched (exact)', ['query' => $query, 'keyword' => $keyword, 'answer' => $item['answer']]);
                     return [
                         'success' => true,
                         'data' => [
@@ -285,12 +288,42 @@ class ChatbotService
         }
 
         // Nếu không khớp từ khóa nào
-        return [
-            'success' => true,
-            'data' => [
-                'message' => 'Xin lỗi, tôi chưa hiểu câu hỏi của bạn. Bạn có thể hỏi về giá vé, lịch trình, tiện nghi, khuyến mãi, gửi hàng... hoặc gọi hotline 0905.999999 để được hỗ trợ!'
-            ]
-        ];
+        try {
+            // Gửi prompt lên DistributeAI Sync API
+            $apiKey = $this->apiKey;
+            $syncUrl = 'https://api.distribute.ai/v1/chat/completions';
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post($syncUrl, [
+                'model' => 'Llama-3.1 8B',
+                'messages' => [
+                    ['role' => 'user', 'content' => $query]
+                ]
+            ]);
+            $data = $response->json();
+            if (isset($data['choices'][0]['message']['content'])) {
+                $result = $data['choices'][0]['message']['content'];
+                Log::info('Chatbot AI response', ['query' => $query, 'ai_response' => $result]);
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => nl2br($result)
+                    ]
+                ];
+            } else {
+                Log::error('DistributeAI raw response', ['raw' => $response->body(), 'json' => $data]);
+                throw new \Exception('Không lấy được kết quả từ DistributeAI');
+            }
+        } catch (\Exception $e) {
+            Log::error('DistributeAI Chatbot error', ['error' => $e->getMessage()]);
+            return [
+                'success' => true,
+                'data' => [
+                    'message' => 'Xin lỗi, tôi chưa hiểu câu hỏi của bạn. Bạn có thể hỏi về giá vé, lịch trình, tiện nghi, khuyến mãi, gửi hàng... hoặc gọi hotline 0905.999999 để được hỗ trợ!'
+                ]
+            ];
+        }
     }
 
     /**
