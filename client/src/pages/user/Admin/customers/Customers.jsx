@@ -2,160 +2,162 @@ import React, { useEffect, useState } from 'react';
 import HomeAdminLayout from '../../../../layouts/AdminLayout';
 import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
+import { useApi } from '../../../../hooks/useApi';
+import { fetchSortedData } from '../../../../utils/fetchSortedData';
 
 const Customers = () => {
-  const [customers, setCustomers] = useState([]);
+  const api = useApi();
+
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState(null);
-  const [newCustomer, setNewCustomer] = useState({
+  const [editingUser, setEditingUser] = useState(null);
+
+  const [formUser, setFormUser] = useState({
     name: '',
     email: '',
     phone: '',
-    birthdate: '',
+    password: '',
+    password_confirmation: '',
+    role_id: 2,   // default customer
+    address: '',
     status: 'active',
   });
 
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
+    const fetchUsers = async () => {
       try {
-        setCustomers([
-          {
-            id: 1,
-            name: 'Nguyễn Văn D',
-            email: 'nguyenvand@example.com',
-            phone: '0909999999',
-            birthdate: '1995-01-01',
-            status: 'active',
-          },
-          {
-            id: 2,
-            name: 'Phạm Thị E',
-            email: 'phamthie@example.com',
-            phone: '0911222333',
-            birthdate: '1990-10-12',
-            status: 'blocked',
-          },
-          {
-            id: 3,
-            name: 'Lê Thị F',
-            email: 'lethif@example.com',
-            phone: '0922333444',
-            birthdate: '1988-05-05',
-            status: 'active',
-          },
-          {
-            id: 4,
-            name: 'Trần Văn G',
-            email: 'tranvang@example.com',
-            phone: '0933444555',
-            birthdate: '1992-09-20',
-            status: 'active',
-          },
-          {
-            id: 5,
-            name: 'Hoàng Thị H',
-            email: 'hoangthih@example.com',
-            phone: '0944555666',
-            birthdate: '1985-12-15',
-            status: 'blocked',
-          },
-          {
-            id: 6,
-            name: 'Phan Văn I',
-            email: 'phanvani@example.com',
-            phone: '0955666777',
-            birthdate: '1993-07-07',
-            status: 'active',
-          },
-        ]);
-        setLoading(false);
+        setLoading(true);
+        const UsersData = await fetchSortedData(api, '/admin/users');
+        setUsers(UsersData);
       } catch (err) {
-        setError('Không thể tải danh sách khách hàng.');
+        setError(err);
+      } finally {
         setLoading(false);
       }
-    }, 500);
+    };
+    fetchUsers();
   }, []);
 
-  const handleEdit = (customer) => {
-    setEditingCustomer(customer);
-    setNewCustomer({ ...customer });
+  const handleSaveUser = async () => {
+    try {
+      const payload = {
+        name: formUser.name,
+        email: formUser.email,
+        phone: formUser.phone,
+        role_id: formUser.role_id,  // gửi role_id số
+        address: formUser.address,
+        status: formUser.status,
+      };
+
+      if (!editingUser || formUser.password) {
+        payload.password = formUser.password;
+        payload.password_confirmation = formUser.password_confirmation;
+      }
+
+      console.log('Payload gửi lên:', payload);
+
+      if (editingUser) {
+        await api.put(`/admin/users/${editingUser.id}`, payload);
+        alert('Cập nhật người dùng thành công');
+      } else {
+        await api.post('/admin/users', payload);
+        alert('Tạo người dùng thành công');
+      }
+
+      setShowModal(false);
+      setEditingUser(null);
+      resetForm();
+      // Reload data
+      const newData = await fetchSortedData(api, '/admin/users');
+      setUsers(newData);
+
+    } catch (error) {
+      console.error('Lỗi khi lưu user:', error);
+      alert('Lỗi khi lưu người dùng');
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (window.confirm(`Bạn có chắc muốn xóa user ID ${id}?`)) {
+      try {
+        await api.delete(`/admin/users/${id}`);
+        alert('Xóa user thành công');
+        // Reload data
+        const newData = await fetchSortedData(api, '/admin/users');
+        setUsers(newData);
+      } catch (error) {
+        alert('Lỗi khi xóa user');
+      }
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setFormUser({
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      role_id: user.role_id || 2,
+      status: user.status || 'active',
+      address: user.address || '',
+      password: '',
+      password_confirmation: '',
+    });
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm(`Xoá khách hàng có ID: ${id}?`)) {
-      setCustomers(customers.filter((c) => c.id !== id));
-    }
-  };
-
-  const handleSaveCustomer = () => {
-    // Kiểm tra trùng email/sđt (loại trừ user đang sửa)
-    const isEmailDuplicate = customers.some(
-      (c) => c.email === newCustomer.email && (!editingCustomer || c.id !== editingCustomer.id)
-    );
-    const isPhoneDuplicate = customers.some(
-      (c) => c.phone === newCustomer.phone && (!editingCustomer || c.id !== editingCustomer.id)
-    );
-    if (isEmailDuplicate) {
-      alert('Email đã tồn tại!');
-      return;
-    }
-    if (isPhoneDuplicate) {
-      alert('Số điện thoại đã tồn tại!');
-      return;
-    }
-    if (editingCustomer) {
-      setCustomers(customers.map((c) =>
-        c.id === editingCustomer.id ? { ...editingCustomer, ...newCustomer } : c
-      ));
-    } else {
-      const newId = customers.length ? Math.max(...customers.map(c => c.id)) + 1 : 1;
-      setCustomers([...customers, { id: newId, ...newCustomer }]);
-    }
-
-    setShowModal(false);
-    setEditingCustomer(null);
-    setNewCustomer({ name: '', email: '', phone: '', birthdate: '', status: 'active' });
+  const statusMap = {
+    active: { className: 'text-green-600 font-bold', label: 'Hoạt động' },
+    inactive: { className: 'text-red-600 font-bold', label: 'Không hoạt động' },
+    banned: { className: 'text-gray-600 font-bold', label: 'Bị khóa' },
   };
 
   const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'name', label: 'Họ tên' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Số điện thoại' },
-    { key: 'birthdate', label: 'Ngày sinh' },
+    { label: 'ID', key: 'id' },
+    { label: 'Tên', key: 'name' },
+    { label: 'Email', key: 'email' },
+    { label: 'Số điện thoại', key: 'phone' },
     {
-      key: 'status',
-      label: 'Trạng thái',
+      label: 'Vai trò',
+      key: 'role.name',
       render: (value) => {
-        const statusMap = {
-          active: 'Hoạt động',
-          inactive: 'Ngừng hoạt động',
-          banned: 'Bị khoá',
+        const roleMap = {
+          admin: { label: 'Admin', className: 'text-orange-500 font-bold' },
+          customer: { label: 'Customer', className: 'text-green-600 font-bold' },
         };
-        const classMap = {
-          active: 'status-success',
-          inactive: 'status-pending',
-          banned: 'status-canceled',
-        };
-        return <span className={classMap[value] || 'status-default'}>{statusMap[value] || value}</span>;
+        const role = roleMap[value] || { label: value || 'N/A', className: '' };
+        return <span className={role.className}>{role.label}</span>;
       },
     },
     {
-      key: 'actions',
+      label: 'Trạng thái',
+      key: 'status',
+      render: (value) => {
+        const s = statusMap[value] || { className: '', label: value };
+        return <span className={s.className}>{s.label}</span>;
+      },
+    },
+    {
       label: 'Hành động',
-      render: (_, customer) => (
-        <div className="action-buttons">
-          <button className="edit-btn" onClick={() => handleEdit(customer)}>Sửa</button>
-          <button className="delete-btn" onClick={() => handleDelete(customer.id)}>Xoá</button>
-        </div>
-      ),
+      key: 'actions',
     },
   ];
+
+  const resetForm = () => {
+    setFormUser({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      password_confirmation: '',
+      role_id: 2,
+      address: '',
+      status: 'active',
+    });
+  };
 
   return (
     <HomeAdminLayout>
@@ -165,8 +167,7 @@ const Customers = () => {
           <button
             className="add-btn"
             onClick={() => {
-              setEditingCustomer(null);
-              setNewCustomer({ name: '', email: '', phone: '', birthdate: '', status: 'active' });
+              resetForm();
               setShowModal(true);
             }}
           >
@@ -175,66 +176,96 @@ const Customers = () => {
         </div>
         <ReusableTable
           columns={columns}
-          data={customers}
+          data={users.map((user) => ({
+            ...user,
+            'role.name': user.role?.name,
+            actions: (
+              <div className="action-buttons">
+                <button className="edit-btn" onClick={() => handleEditUser(user)}>Sửa</button>
+                <button className="delete-btn" onClick={() => handleDeleteUser(user.id)}>Xóa</button>
+              </div>
+            ),
+          }))}
           loading={loading}
-          error={error}
         />
 
         <ReusableModal
-          title={editingCustomer ? 'Sửa Khách Hàng' : 'Thêm Khách Hàng'}
+          title={editingUser ? 'Sửa Người Dùng' : 'Thêm Người Dùng'}
           show={showModal}
           onClose={() => {
             setShowModal(false);
-            setEditingCustomer(null);
-            setNewCustomer({ name: '', email: '', phone: '', birthdate: '', status: 'active' });
+            setEditingUser(null);
           }}
-          onSubmit={handleSaveCustomer}
+          onSubmit={handleSaveUser}
         >
           <div className="form-group">
             <label>Họ tên:</label>
             <input
               type="text"
-              value={newCustomer.name}
-              onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-              placeholder="VD: Nguyễn Văn D"
+              value={formUser.name}
+              onChange={(e) => setFormUser({ ...formUser, name: e.target.value })}
+              placeholder="VD: Nguyễn Văn A"
             />
           </div>
           <div className="form-group">
             <label>Email:</label>
             <input
               type="email"
-              value={newCustomer.email}
-              onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-              placeholder="VD: example@email.com"
+              value={formUser.email}
+              onChange={(e) => setFormUser({ ...formUser, email: e.target.value })}
+              placeholder="VD: user@email.com"
             />
           </div>
           <div className="form-group">
             <label>Số điện thoại:</label>
             <input
               type="text"
-              value={newCustomer.phone}
-              onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-              placeholder="VD: 0909999999"
+              value={formUser.phone}
+              onChange={(e) => setFormUser({ ...formUser, phone: e.target.value })}
+              placeholder="VD: 0905123456"
             />
           </div>
           <div className="form-group">
-            <label>Ngày sinh:</label>
-            <input
-              type="date"
-              value={newCustomer.birthdate}
-              onChange={(e) => setNewCustomer({ ...newCustomer, birthdate: e.target.value })}
-            />
+            <label>Vai trò:</label>
+            <select
+              value={formUser.role_id}
+              onChange={(e) => setFormUser({ ...formUser, role_id: parseInt(e.target.value) })}
+            >
+              <option value={1}>Admin</option>
+              <option value={2}>Customer</option>
+            </select>
           </div>
           <div className="form-group">
             <label>Trạng thái:</label>
             <select
-              value={newCustomer.status}
-              onChange={(e) => setNewCustomer({ ...newCustomer, status: e.target.value })}
+              value={formUser.status}
+              onChange={(e) => setFormUser({ ...formUser, status: e.target.value })}
             >
               <option value="active">Hoạt động</option>
-              <option value="blocked">Tạm khoá</option>
+              <option value="inactive">Không hoạt động</option>
+              <option value="banned">Bị khóa</option>
             </select>
           </div>
+          {!editingUser && (
+            <>
+              <div className="form-group">
+                <label>Mật khẩu:</label>
+                <input
+                  type="password"
+                  value={formUser.password}
+                  onChange={(e) => setFormUser({ ...formUser, password: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Xác nhận mật khẩu:</label>
+                <input
+                  type="password"
+                  value={formUser.password_confirmation}
+                  onChange={(e) => setFormUser({ ...formUser, password_confirmation: e.target.value })}
+                />
+              </div>
+            </>
+          )}
         </ReusableModal>
       </div>
     </HomeAdminLayout>
