@@ -2,152 +2,133 @@ import React, { useEffect, useState } from 'react';
 import HomeAdminLayout from '../../../../layouts/AdminLayout';
 import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
+import { useApi } from '../../../../hooks/useApi';
+import { fetchSortedData } from '../../../../utils/fetchSortedData';
 
 const Drivers = () => {
+  const api = useApi();
+
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [editingDriver, setEditingDriver] = useState(null);
-  const [newDriver, setNewDriver] = useState({
+
+  const [formDriver, setFormDriver] = useState({
     name: '',
     phone: '',
-    birthdate: '',
+    birth_date: '',
     experience_years: '',
+    license_number: '',
+    license_expiry: '',
     status: 'active',
   });
 
-  // useEffect giả lập fetch API
+  const statusMap = {
+    active: { label: 'Hoạt động', className: 'text-green-600 font-bold' },
+    inactive: { label: 'Không hoạt động', className: 'text-red-600 font-bold' },
+  };
+
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
+    const fetchDrivers = async () => {
       try {
-        setDrivers([
-          {
-            id: 1,
-            name: 'Nguyễn Văn A',
-            phone: '0909123456',
-            birthdate: '1985-05-20',
-            experience_years: 10,
-            status: 'active',
-          },
-          {
-            id: 2,
-            name: 'Trần Văn B',
-            phone: '0912123456',
-            birthdate: '1990-08-15',
-            experience_years: 7,
-            status: 'on_leave',
-          },
-          {
-            id: 3,
-            name: 'Lê Văn C',
-            phone: '0922123456',
-            birthdate: '1982-12-01',
-            experience_years: 15,
-            status: 'inactive',
-          },
-          {
-            id: 4,
-            name: 'Phạm Văn D',
-            phone: '0933456789',
-            birthdate: '1988-03-22',
-            experience_years: 9,
-            status: 'active',
-          },
-          {
-            id: 5,
-            name: 'Đỗ Thị E',
-            phone: '0944567890',
-            birthdate: '1992-11-10',
-            experience_years: 5,
-            status: 'on_leave',
-          },
-          {
-            id: 6,
-            name: 'Bùi Văn F',
-            phone: '0955678901',
-            birthdate: '1980-07-07',
-            experience_years: 20,
-            status: 'inactive',
-          }
-        ]);
-        setLoading(false);
-      } catch (e) {
-        setError('Không thể tải dữ liệu tài xế.');
+        setLoading(true);
+        const data = await fetchSortedData(api, '/admin/drivers');
+        console.log('drivesData', data)
+        setDrivers(data);
+      } catch (err) {
+        setError(err);
+      } finally {
         setLoading(false);
       }
-    }, 500);
+    };
+    fetchDrivers();
   }, []);
 
-  const handleEdit = (driver) => {
+  const resetForm = () => {
+    setFormDriver({
+      name: '',
+      phone: '',
+      birth_date: '',
+      experience_years: '',
+      license_number: '',
+      license_expiry: '',
+      status: 'active',
+    });
+  };
+
+  const handleEditDriver = (driver) => {
     setEditingDriver(driver);
-    setNewDriver({ ...driver });
+    setFormDriver({
+      name: driver.name || '',
+      phone: driver.phone || '',
+      birth_date: driver.birth_date ? driver.birth_date.slice(0, 10) : '',
+      experience_years: driver.experience_years || '',
+      license_number: driver.license_number || '',
+      license_expiry: driver.license_expiry ? driver.license_expiry.slice(0, 10) : '',
+      status: driver.status || 'active',
+    });
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm(`Xoá tài xế có ID: ${id}?`)) {
-      setDrivers(drivers.filter((driver) => driver.id !== id));
+  const handleSaveDriver = async () => {
+    try {
+      const payload = { ...formDriver };
+      console.log('payload trước khi gửi', payload)
+
+      if (editingDriver) {
+        await api.put(`/admin/drivers/${editingDriver.id}`, payload);
+        alert('Cập nhật tài xế thành công');
+      } else {
+        await api.post(`/admin/drivers`, payload);
+        alert('Tạo tài xế thành công');
+      }
+
+      setShowModal(false);
+      setEditingDriver(null);
+      resetForm();
+      const data = await fetchSortedData(api, '/admin/drivers');
+      setDrivers(data);
+    } catch (error) {
+      console.error('Lỗi khi lưu tài xế:', error);
+      alert('Có lỗi xảy ra khi lưu tài xế.');
     }
   };
 
-  const handleSaveDriver = () => {
-    if (editingDriver) {
-      // Cập nhật
-      /*
-      updateDriverAPI(editingDriver.id, newDriver).then(() => fetchDrivers());
-      */
-      setDrivers(drivers.map((d) =>
-        d.id === editingDriver.id ? { ...editingDriver, ...newDriver } : d
-      ));
-    } else {
-      // Thêm mới
-      /*
-      createDriverAPI(newDriver).then(() => fetchDrivers());
-      */
-      const newId = drivers.length ? Math.max(...drivers.map((d) => d.id)) + 1 : 1;
-      setDrivers([...drivers, { id: newId, ...newDriver }]);
+  const handleDeleteDriver = async (id) => {
+    if (window.confirm(`Bạn có chắc muốn xóa tài xế ID ${id}?`)) {
+      try {
+        await api.delete(`/admin/drivers/${id}`);
+        alert('Đã xóa tài xế.');
+        const data = await fetchSortedData(api, '/admin/drivers');
+        setDrivers(data);
+      } catch (error) {
+        alert('Lỗi khi xóa tài xế.');
+      }
     }
-
-    setNewDriver({ name: '', phone: '', birthdate: '', experience_years: '', status: 'active' });
-    setEditingDriver(null);
-    setShowModal(false);
   };
 
   const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'name', label: 'Họ tên' },
-    { key: 'phone', label: 'Số điện thoại' },
-    { key: 'birthdate', label: 'Ngày sinh' },
-    { key: 'experience_years', label: 'Kinh nghiệm', render: (value) => value ? `${value} năm` : '' },
+    { label: 'ID', key: 'id' },
+    { label: 'Họ tên', key: 'name' },
+    { label: 'Số điện thoại', key: 'phone' },
     {
-      key: 'status',
+      label: 'Ngày sinh', key: 'birth_date',
+      render: (value) => new Date(value).toLocaleDateString('vi-VN')
+    },
+    { label: 'Kinh nghiệm (năm)', key: 'experience_years' },
+    {
       label: 'Trạng thái',
+      key: 'status',
       render: (value) => {
-        const statusMap = {
-          active: 'Hoạt động',
-          on_leave: 'Nghỉ phép',
-          inactive: 'Ngừng làm việc',
-        };
-        const classMap = {
-          active: 'status-success',
-          on_leave: 'status-pending',
-          inactive: 'status-canceled',
-        };
-        return <span className={classMap[value]}>{statusMap[value]}</span>;
+        const s = statusMap[value] || { label: value, className: '' };
+        return <span className={s.className}>{s.label}</span>;
       },
     },
     {
-      key: 'actions',
       label: 'Hành động',
-      render: (_, driver) => (
-        <div className="action-buttons">
-          <button className="edit-btn" onClick={() => handleEdit(driver)}>Sửa</button>
-          <button className="delete-btn" onClick={() => handleDelete(driver.id)}>Xoá</button>
-        </div>
-      ),
+      key: 'actions',
     },
   ];
 
@@ -159,14 +140,7 @@ const Drivers = () => {
           <button
             className="add-btn"
             onClick={() => {
-              setEditingDriver(null);
-              setNewDriver({
-                name: '',
-                phone: '',
-                birthdate: '',
-                experience_years: '',
-                status: 'active',
-              });
+              resetForm();
               setShowModal(true);
             }}
           >
@@ -175,18 +149,24 @@ const Drivers = () => {
         </div>
         <ReusableTable
           columns={columns}
-          data={drivers}
+          data={drivers.map((driver) => ({
+            ...driver,
+            actions: (
+              <div className="action-buttons">
+                <button className="edit-btn" onClick={() => handleEditDriver(driver)}>Sửa</button>
+                <button className="delete-btn" onClick={() => handleDeleteDriver(driver.id)}>Xóa</button>
+              </div>
+            ),
+          }))}
           loading={loading}
-          error={error}
         />
 
         <ReusableModal
-          title={editingDriver ? 'Sửa Tài Xế' : 'Thêm Tài Xế Mới'}
+          title={editingDriver ? 'Sửa Tài Xế' : 'Thêm Tài Xế'}
           show={showModal}
           onClose={() => {
             setShowModal(false);
             setEditingDriver(null);
-            setNewDriver({ name: '', phone: '', birthdate: '', experience_years: '', status: 'active' });
           }}
           onSubmit={handleSaveDriver}
         >
@@ -194,48 +174,63 @@ const Drivers = () => {
             <label>Họ tên:</label>
             <input
               type="text"
-              value={newDriver.name}
-              onChange={(e) => setNewDriver({ ...newDriver, name: e.target.value })}
-              placeholder="VD: Nguyễn Văn A"
+              value={formDriver.name}
+              onChange={(e) => setFormDriver({ ...formDriver, name: e.target.value })}
+              placeholder="VD: Trần Văn Tài"
             />
           </div>
           <div className="form-group">
             <label>Số điện thoại:</label>
             <input
               type="text"
-              value={newDriver.phone}
-              onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
-              placeholder="VD: 0909123456"
+              value={formDriver.phone}
+              onChange={(e) => setFormDriver({ ...formDriver, phone: e.target.value })}
+              placeholder="VD: 0905123456"
             />
           </div>
           <div className="form-group">
             <label>Ngày sinh:</label>
             <input
               type="date"
-              value={newDriver.birthdate}
-              onChange={(e) => setNewDriver({ ...newDriver, birthdate: e.target.value })}
+              value={formDriver.birth_date}
+              onChange={(e) => setFormDriver({ ...formDriver, birth_date: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>Kinh nghiệm (năm):</label>
             <input
               type="number"
-              min="0"
-              max="100"
-              value={newDriver.experience_years}
-              onChange={(e) => setNewDriver({ ...newDriver, experience_years: e.target.value })}
+              value={formDriver.experience_years}
+              onChange={(e) => setFormDriver({ ...formDriver, experience_years: e.target.value })}
               placeholder="VD: 5"
+            />
+          </div>
+          <div className="form-group">
+            <label>Số giấy phép lái xe:</label>
+            <input
+              type="text"
+              value={formDriver.license_number}
+              onChange={(e) => setFormDriver({ ...formDriver, license_number: e.target.value })}
+              placeholder="VD: B2-123456"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Ngày hết hạn GPLX:</label>
+            <input
+              type="date"
+              value={formDriver.license_expiry}
+              onChange={(e) => setFormDriver({ ...formDriver, license_expiry: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>Trạng thái:</label>
             <select
-              value={newDriver.status}
-              onChange={(e) => setNewDriver({ ...newDriver, status: e.target.value })}
+              value={formDriver.status}
+              onChange={(e) => setFormDriver({ ...formDriver, status: e.target.value })}
             >
               <option value="active">Hoạt động</option>
-              <option value="on_leave">Nghỉ phép</option>
-              <option value="inactive">Ngừng làm việc</option>
+              <option value="inactive">Không hoạt động</option>
             </select>
           </div>
         </ReusableModal>
