@@ -110,3 +110,5 @@ Route::prefix('v1/chatbot')->group(function () {
     Route::get('history', [ChatbotController::class, 'getHistory'])->middleware('auth:sanctum');
     Route::delete('history', [ChatbotController::class, 'clearHistory'])->middleware('auth:sanctum');
 });
+
+Route::post('/chat', [App\Http\Controllers\ChatbotController::class, 'chat']);

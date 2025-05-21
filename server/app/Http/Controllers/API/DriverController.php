@@ -185,10 +185,8 @@ class DriverController extends Controller
     }
 
     /**
-     * Xóa tài xế
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Xóa hoặc vô hiệu hóa tài xế
+     * Nếu có query param force=1 thì xóa cứng, ngược lại chỉ vô hiệu hóa
      */
     public function destroy($id)
     {
@@ -209,14 +207,21 @@ class DriverController extends Controller
             ], 400);
         }
 
-        // Thay vì xóa, cập nhật trạng thái thành inactive
-        $driver->status = 'inactive';
-        $driver->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Tài xế đã được vô hiệu hóa thành công'
-        ]);
+        // Nếu có query param force=1 thì xóa cứng
+        if (request()->query('force') == 1) {
+            $driver->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Tài xế đã được xóa khỏi hệ thống'
+            ]);
+        } else {
+            $driver->status = 'inactive';
+            $driver->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Tài xế đã được vô hiệu hóa thành công'
+            ]);
+        }
     }
 
     /**

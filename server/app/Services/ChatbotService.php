@@ -16,7 +16,7 @@ class ChatbotService
 
     public function __construct()
     {
-        $this->apiKey = Config::get('chatbot.api_key');
+        $this->apiKey = env('CHATBOT_API_KEY', 'f5f2d613156777d0e0455273788d46e4');
         $this->baseUrl = Config::get('chatbot.base_url');
         $this->timeout = Config::get('chatbot.timeout');
         $this->cacheTtl = Config::get('chatbot.cache_ttl');
