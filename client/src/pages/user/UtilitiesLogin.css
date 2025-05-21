@@ -161,7 +161,7 @@ body {
   /* Chatbot */
   .chatbot {
     position: fixed;
-    bottom: 1.25rem;
+    bottom: 5rem;
     right: 1.25rem;
     width: 20rem;
     background-color: white;
@@ -205,7 +205,7 @@ body {
   
   .chatbot-messages {
     padding: 1rem;
-    height: 16rem;
+    height: 30rem;
     overflow-y: auto;
     background-color: #f9fafb;
     display: flex;
@@ -249,7 +249,7 @@ body {
   
   .chatbot-toggle {
     position: fixed;
-    bottom: 1.25rem;
+    bottom: 5rem;
     right: 1.25rem;
     background: linear-gradient(to right, #f97316, #ea580c);
     color: white;

@@ -215,10 +215,11 @@ const Introductions = () => {
             <div className="contact-info-box">
               <h3 className="contact-title">📞 Thông tin liên hệ</h3>
               <ul className="contact-list">
-                <li>📌 <strong>Đặt vé:</strong> <span className="phone-number">0905.3333.33</span></li>
-                <li>📦 <strong>Gửi hàng:</strong> <span className="phone-number">0905.888.888</span> (Mạnh)</li>
-                <li>🚛 <strong>Thuê xe chở hàng:</strong> <span className="phone-number">0905.1111.11</span></li>
-                <li>📜 <strong>Hợp đồng thuê xe:</strong> <span className="phone-number">0905.2222.22</span> (Hùng)</li>
+                <li>📌 <strong>Đặt vé:</strong> <span className="phone-number">0905.3333.33</span>(Huy)</li>
+                <li>📦 <strong>Gửi hàng:</strong> <span className="phone-number">0905.888.888</span> (Trí)</li>
+                <li>🚛 <strong>Thuê xe chở hàng:</strong> <span className="phone-number">0905.1111.11</span> (Hải)</li>
+                <li>📜 <strong>Hợp đồng thuê xe:</strong> <span className="phone-number">0905.2222.22</span> (Dũng)</li>
+                <li>📜 <strong>Chăm sóc khách hàng:</strong> <span className="phone-number">0905.3333.33</span> (Phong)</li>
               </ul>
             </div>
           </div>
