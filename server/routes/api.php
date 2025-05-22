@@ -33,9 +33,9 @@ Route::prefix('v1')->group(function () {
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
     // Tìm kiếm và hiển thị thông tin tuyến đường
-    Route::get('routes/search', [LineController::class, 'search']);
-    Route::get('routes', [LineController::class, 'index']);
-    Route::get('routes/{id}', [LineController::class, 'show']);
+    Route::get('lines/search', [LineController::class, 'search']);
+    Route::get('lines', [LineController::class, 'index']);
+    Route::get('lines/{id}', [LineController::class, 'show']);
 
     // Tìm kiếm và hiển thị chuyến xe
     Route::get('trips/search', [TripController::class, 'search']);
@@ -72,7 +72,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 // Route group cho các API chỉ dành cho admin
 Route::prefix('v1/admin')->middleware(['auth:sanctum','admin'])->group(function () {
     // Quản lý tuyến đường
-    Route::apiResource('routes', LineController::class);
+    Route::apiResource('lines', LineController::class);
 
     // Quản lý phương tiện
     Route::apiResource('vehicles', VehicleController::class);
@@ -87,7 +87,7 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum','admin'])->group(function 
     Route::apiResource('seats', SeatController::class);
 
     // Quản lý người dùng
-    Route::apiResource('users', AdminUserController::class);
+    Route::apiResource('users', UserController::class);
 
     // Thống kê báo cáo
     Route::get('reports/revenue', [BookingController::class, 'revenueReport']);

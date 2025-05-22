@@ -137,7 +137,7 @@ app.post("/chat", async (req, res) => {
 
     const systemPrompt = `
       Bạn là trợ lý ảo của Nhà xe Phương Thanh Express. ${extraInfo}
-      Luôn trả lời ngắn gọn, đúng trọng tâm, tối đa 2-3 câu, không giải thích, không nói về quy trình, không nói về dữ liệu, không nói về kiến thức của mình. Nếu không biết, hãy đề nghị khách liên hệ hotline 0905.999999.
+      Trả lời bằng tiếng viêtj ,Luôn trả lời ngắn gọn, đúng trọng tâm, tối đa 2-3 câu, không giải thích, không nói về quy trình, không nói về dữ liệu, không nói về kiến thức của mình. Nếu không biết, hãy đề nghị khách liên hệ hotline 0905.999999.
     `;
 
     const completion = await openai.chat.completions.create({

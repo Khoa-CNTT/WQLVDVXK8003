@@ -199,8 +199,8 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required|string|max:20',
-            'verification_code' => 'required|string|size:6',
-            'password' => 'required|string|min:8|confirmed',
+            'otp' => 'required|string|size:6',
+            'password' => 'required|string|min:8|confirmed', // Laravel sẽ tự kiểm tra password_confirmation
         ]);
 
         if ($validator->fails()) {
@@ -211,31 +211,30 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Kiểm tra mã xác thực
         $cacheKey = 'password_reset_' . $request->phone;
-        $storedCode = Cache::get($cacheKey);
+        $code = Cache::get($cacheKey);
 
-        if (!$storedCode || $storedCode !== $request->verification_code) {
+        \Log::info('OTP debug', ['cache' => $code, 'input' => $request->otp]);
+
+        if (!$code || $code !== $request->otp) {
             return response()->json([
                 'success' => false,
-                'message' => 'Mã xác thực không hợp lệ hoặc đã hết hạn'
+                'message' => 'Mã xác thực không đúng hoặc đã hết hạn'
             ], 400);
         }
 
-        // Tìm user theo số điện thoại
         $user = User::where('phone', $request->phone)->first();
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy tài khoản'
+                'message' => 'Không tìm thấy tài khoản với số điện thoại này'
             ], 404);
         }
 
-        // Cập nhật mật khẩu mới
         $user->password = Hash::make($request->password);
         $user->save();
 
-        // Xóa mã xác thực khỏi cache
+        // Xoá mã OTP sau khi dùng
         Cache::forget($cacheKey);
 
         return response()->json([

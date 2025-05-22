@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Trip;
-use App\Models\Route;
 use App\Models\Vehicle;
 use App\Models\Driver;
 use App\Models\Ticket;
@@ -38,12 +37,12 @@ class TripController extends Controller
         }
 
         // Tìm các route phù hợp
-        $routes = Route::where('departure', 'like', '%' . $request->departure . '%')
+        $lines = \App\Models\Line::where('departure', 'like', '%' . $request->departure . '%')
                         ->where('destination', 'like', '%' . $request->destination . '%')
                         ->where('status', 'active')
                         ->pluck('id');
 
-        if ($routes->isEmpty()) {
+        if ($lines->isEmpty()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Không tìm thấy tuyến đường phù hợp',
@@ -54,8 +53,8 @@ class TripController extends Controller
         // Tìm các trip trong ngày đã chọn
         $searchDate = Carbon::parse($request->date)->format('Y-m-d');
 
-        $trips = Trip::with(['route', 'vehicle', 'driver'])
-                      ->whereIn('route_id', $routes)
+        $trips = Trip::with(['line', 'vehicle', 'driver'])
+                      ->whereIn('line_id', $lines)
                       ->whereDate('departure_time', $searchDate)
                       ->where('status', 'active')
                       ->orderBy('departure_time')
@@ -93,7 +92,7 @@ class TripController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Trip::with(['route', 'vehicle', 'driver']);
+        $query = Trip::with(['line', 'vehicle', 'driver']);
 
         // Lọc theo trạng thái
         if ($request->has('status')) {
@@ -105,9 +104,9 @@ class TripController extends Controller
             $query->whereDate('departure_time', $request->date);
         }
 
-        // Lọc theo route
-        if ($request->has('route_id')) {
-            $query->where('route_id', $request->route_id);
+        // Lọc theo tuyến đường
+        if ($request->has('line_id')) {
+            $query->where('line_id', $request->line_id);
         }
 
         $trips = $query->orderBy('departure_time')
@@ -128,7 +127,7 @@ class TripController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'route_id' => 'required|exists:routes,id',
+            'line_id' => 'required|exists:lines,id',
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'required|exists:drivers,id',
             'departure_time' => 'required|date_format:Y-m-d H:i:s',
@@ -189,7 +188,7 @@ class TripController extends Controller
         }
 
         $trip = Trip::create([
-            'route_id' => $request->route_id,
+            'line_id' => $request->line_id,
             'vehicle_id' => $request->vehicle_id,
             'driver_id' => $request->driver_id,
             'departure_time' => $request->departure_time,
@@ -201,7 +200,7 @@ class TripController extends Controller
         ]);
 
         // Load relationships
-        $trip->load(['route', 'vehicle', 'driver']);
+        $trip->load(['line', 'vehicle', 'driver']);
 
         return response()->json([
             'success' => true,
@@ -218,7 +217,7 @@ class TripController extends Controller
      */
     public function show($id)
     {
-        $trip = Trip::with(['route', 'vehicle', 'driver'])->findOrFail($id);
+        $trip = Trip::with(['line', 'vehicle', 'driver'])->findOrFail($id);
 
         // Lấy thông tin số ghế đã đặt
         $bookedSeats = Ticket::where('trip_id', $trip->id)
@@ -245,7 +244,7 @@ class TripController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'route_id' => 'required|exists:routes,id',
+            'line_id' => 'required|exists:lines,id',
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'required|exists:drivers,id',
             'departure_time' => 'required|date_format:Y-m-d H:i:s',
@@ -329,7 +328,7 @@ class TripController extends Controller
         }
 
         $trip->update([
-            'route_id' => $request->route_id,
+            'line_id' => $request->line_id,
             'vehicle_id' => $request->vehicle_id,
             'driver_id' => $request->driver_id,
             'departure_time' => $request->departure_time,
@@ -340,7 +339,7 @@ class TripController extends Controller
         ]);
 
         // Load relationships
-        $trip->load(['route', 'vehicle', 'driver']);
+        $trip->load(['line', 'vehicle', 'driver']);
 
         return response()->json([
             'success' => true,
@@ -404,15 +403,15 @@ class TripController extends Controller
         $endDate = Carbon::parse($request->end_date)->endOfDay();
 
         // Thống kê số chuyến theo tuyến
-        $routeStats = Trip::whereBetween('departure_time', [$startDate, $endDate])
-            ->select('route_id', DB::raw('COUNT(*) as trip_count'))
-            ->groupBy('route_id')
-            ->with('route')
+        $lineStats = Trip::whereBetween('departure_time', [$startDate, $endDate])
+            ->select('line_id', DB::raw('COUNT(*) as trip_count'))
+            ->groupBy('line_id')
+            ->with('line')
             ->get();
 
         // Thống kê số vé đã bán theo chuyến
         $tripStats = Trip::whereBetween('departure_time', [$startDate, $endDate])
-            ->with(['route', 'tickets' => function($query) {
+            ->with(['line', 'tickets' => function($query) {
                 $query->where('status', '!=', 'cancelled');
             }])
             ->get()
@@ -420,7 +419,7 @@ class TripController extends Controller
                 return [
                     'trip_id' => $trip->id,
                     'trip_code' => $trip->trip_code,
-                    'route' => $trip->route->departure . ' - ' . $trip->route->destination,
+                    'line' => $trip->line ? ($trip->line->departure . ' - ' . $trip->line->destination) : null,
                     'departure_time' => $trip->departure_time,
                     'status' => $trip->status,
                     'ticket_count' => $trip->tickets->count(),
@@ -440,7 +439,7 @@ class TripController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'route_stats' => $routeStats,
+                'line_stats' => $lineStats,
                 'trip_stats' => $tripStats,
                 'summary' => [
                     'total_trips' => $totalTrips,

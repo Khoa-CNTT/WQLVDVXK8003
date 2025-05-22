@@ -17,7 +17,7 @@ class LineController extends Controller
      */
     public function index()
     {
-        return Cache::remember('routes.all', 3600, function () {
+        return Cache::remember('lines.all', 3600, function () {
             return Line::with(['trips' => function ($query) {
                 $query->whereDate('departure_time', '>=', now());
             }])->get();
@@ -32,7 +32,7 @@ class LineController extends Controller
      */
     public function search(Request $request)
     {
-        $cacheKey = 'routes.search.' . md5(json_encode($request->all()));
+        $cacheKey = 'lines.search.' . md5(json_encode($request->all()));
 
         return Cache::remember($cacheKey, 1800, function () use ($request) {
             return Line::query()
@@ -76,7 +76,7 @@ class LineController extends Controller
             ], 422);
         }
 
-        $route = Line::create([
+        $line = Line::create([
             'departure' => $request->departure,
             'destination' => $request->destination,
             'distance' => $request->distance,
@@ -86,12 +86,12 @@ class LineController extends Controller
             'status' => $request->status,
         ]);
 
-        Cache::tags(['routes'])->flush();
+        Cache::tags(['lines'])->flush();
 
         return response()->json([
             'success' => true,
             'message' => 'Tạo tuyến đường thành công',
-            'data' => $route
+            'data' => $line
         ], 201);
     }
 
@@ -103,7 +103,7 @@ class LineController extends Controller
      */
     public function show($id)
     {
-        return Cache::remember('routes.' . $id, 3600, function () use ($id) {
+        return Cache::remember('lines.' . $id, 3600, function () use ($id) {
             return Line::with(['trips' => function ($query) {
                 $query->whereDate('departure_time', '>=', now())
                       ->orderBy('departure_time');
@@ -138,8 +138,8 @@ class LineController extends Controller
             ], 422);
         }
 
-        $route = Line::findOrFail($id);
-        $route->update([
+        $line = Line::findOrFail($id);
+        $line->update([
             'departure' => $request->departure,
             'destination' => $request->destination,
             'distance' => $request->distance,
@@ -149,12 +149,12 @@ class LineController extends Controller
             'status' => $request->status,
         ]);
 
-        Cache::tags(['routes'])->flush();
+        Cache::tags(['lines'])->flush();
 
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật tuyến đường thành công',
-            'data' => $route
+            'data' => $line
         ]);
     }
 
@@ -166,19 +166,19 @@ class LineController extends Controller
      */
     public function destroy($id)
     {
-        $route = Line::findOrFail($id);
+        $line = Line::findOrFail($id);
 
         // Kiểm tra xem có chuyến xe nào đang sử dụng tuyến đường này không
-        if ($route->trips()->exists()) {
+        if ($line->trips()->exists()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Không thể xóa tuyến đường này vì đang có chuyến xe sử dụng'
             ], 400);
         }
 
-        $route->delete();
+        $line->delete();
 
-        Cache::tags(['routes'])->flush();
+        Cache::tags(['lines'])->flush();
 
         return response()->json([
             'success' => true,

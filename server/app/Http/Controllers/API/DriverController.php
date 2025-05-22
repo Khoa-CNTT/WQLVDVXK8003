@@ -105,7 +105,7 @@ class DriverController extends Controller
 
         // Lấy lịch sử các chuyến xe của tài xế
         $trips = Trip::where('driver_id', $id)
-                     ->with('route')
+                     ->with('line')
                      ->orderBy('departure_time', 'desc')
                      ->limit(10)
                      ->get();

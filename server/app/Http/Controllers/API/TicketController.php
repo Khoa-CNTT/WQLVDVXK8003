@@ -20,7 +20,7 @@ class TicketController extends Controller
      */
     public function index(Request $request)
     {
-        $tickets = Ticket::with(['trip.route', 'trip.vehicle', 'seat', 'booking'])
+        $tickets = Ticket::with(['trip.line', 'trip.vehicle', 'seat', 'booking'])
             ->whereHas('booking', function($query) use ($request) {
                 $query->where('user_id', $request->user()->id);
             })
@@ -41,7 +41,7 @@ class TicketController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = Ticket::with(['trip.route', 'trip.vehicle', 'seat', 'booking.user']);
+        $query = Ticket::with(['trip.line', 'trip.vehicle', 'seat', 'booking.user']);
 
         // Lọc theo trạng thái
         if ($request->has('status')) {
@@ -77,7 +77,7 @@ class TicketController extends Controller
      */
     public function show($id)
     {
-        $ticket = Ticket::with(['trip.route', 'trip.vehicle', 'trip.driver', 'seat', 'booking'])
+        $ticket = Ticket::with(['trip.line', 'trip.vehicle', 'trip.driver', 'seat', 'booking'])
             ->whereHas('booking', function($query) {
                 $query->where('user_id', request()->user()->id);
             })
@@ -181,14 +181,14 @@ $endDate = $request->has('end_date')
         // Thống kê số vé theo tuyến đường
         $routeStats = Ticket::whereBetween('tickets.created_at', [$startDate, $endDate])
             ->join('trips', 'tickets.trip_id', '=', 'trips.id')
-            ->join('routes', 'trips.route_id', '=', 'routes.id')
+            ->join('lines', 'trips.line_id', '=', 'lines.id')
             ->select(
-                'routes.id',
-                'routes.departure',
-                'routes.destination',
+                'lines.id',
+                'lines.departure',
+                'lines.destination',
                 DB::raw('COUNT(tickets.id) as ticket_count')
             )
-            ->groupBy('routes.id', 'routes.departure', 'routes.destination')
+            ->groupBy('lines.id', 'lines.departure', 'lines.destination')
             ->orderBy('ticket_count', 'desc')
             ->get();
 
@@ -198,6 +198,7 @@ $endDate = $request->has('end_date')
         $totalRevenue = Ticket::whereBetween('tickets.created_at', [$startDate, $endDate])
             ->where('tickets.status', '!=', 'cancelled')
             ->join('trips', 'tickets.trip_id', '=', 'trips.id')
+            ->join('lines', 'trips.line_id', '=', 'lines.id')
             ->sum('trips.price');
 
         return response()->json([

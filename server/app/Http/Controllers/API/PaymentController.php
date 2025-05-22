@@ -53,29 +53,16 @@ class PaymentController extends Controller
 
         // Sắp xếp và tạo mã bảo mật
         ksort($inputData);
-        // $hashdata = "";
-        // foreach ($inputData as $key => $value) {
-        //     $hashdata .= $key . "=" . $value . "&";
-        // }
-        $query = "";
-        $i = 0;
-        $hashdata = "";
+        $hashdataArr = [];
         foreach ($inputData as $key => $value) {
-            if ($i == 1) {
-                $hashdata .= '&' . urlencode($key) . "=" . urlencode($value);
-            } else {
-                $hashdata .= urlencode($key) . "=" . urlencode($value);
-                $i = 1;
-            }
-            $query .= urlencode($key) . "=" . urlencode($value) . '&';
+            $hashdataArr[] = $key . '=' . $value;
         }
-        // $hashdata = rtrim($hashdata, "&");
-
+        $hashdata = implode('&', $hashdataArr);
+        $query = http_build_query($inputData);
 
         // Tạo chữ ký bảo mật
         $vnpSecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
-
-        $paymentUrl = $vnp_Url . "?" . http_build_query($inputData) . "&vnp_SecureHash=" . $vnpSecureHash;
+        $paymentUrl = $vnp_Url . "?" . $query . "&vnp_SecureHash=" . $vnpSecureHash;
 
         return response()->json([
             'success' => true,

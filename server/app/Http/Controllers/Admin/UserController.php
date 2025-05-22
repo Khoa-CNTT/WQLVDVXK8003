@@ -68,7 +68,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        $user->load('tickets.trip.route');
+        $user->load('tickets.trip.line');
         return view('admin.users.show', compact('user'));
     }
 
@@ -175,7 +175,7 @@ class UserController extends Controller
      */
     public function bookingHistory(User $user)
     {
-        $tickets = $user->tickets()->with('trip.route')->latest()->paginate(10);
+        $tickets = $user->tickets()->with('trip.line')->latest()->paginate(10);
         return view('admin.users.booking-history', compact('user', 'tickets'));
     }
 }
