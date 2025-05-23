@@ -212,6 +212,7 @@ const Vehicles = () => {
               </div>
             ),
           }))}
+          loading={loading}
         />
 
         <ReusableModal
