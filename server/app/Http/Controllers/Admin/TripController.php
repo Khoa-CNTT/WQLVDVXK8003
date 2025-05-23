@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Trip;
-use App\Models\Route;
 use App\Models\Vehicle;
 use App\Models\Driver;
+use App\Models\Line;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class TripController extends Controller
 {
@@ -17,7 +19,7 @@ class TripController extends Controller
      */
     public function index()
     {
-        $trips = Trip::with(['route', 'vehicle', 'driver'])
+        $trips = Trip::with(['line', 'vehicle', 'driver'])
             ->latest()
             ->paginate(10);
 
@@ -29,11 +31,11 @@ class TripController extends Controller
      */
     public function create()
     {
-        $routes = Route::where('status', 'active')->get();
+        $lines = Line::where('status', 'active')->get();
         $vehicles = Vehicle::where('status', 'active')->get();
         $drivers = Driver::where('status', 'active')->get();
 
-        return view('admin.trips.create', compact('routes', 'vehicles', 'drivers'));
+        return view('admin.trips.create', compact('lines', 'vehicles', 'drivers'));
     }
 
     /**
@@ -42,13 +44,13 @@ class TripController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'route_id' => 'required|exists:routes,id',
+            'line_id' => 'required|exists:lines,id',
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'required|exists:drivers,id',
-            'departure_time' => 'required|date',
-            'estimated_arrival' => 'required|date|after:departure_time',
+            'departure_time' => 'required|date_format:Y-m-d H:i:s',
+            'arrival_time' => 'required|date_format:Y-m-d H:i:s|after:departure_time',
             'price' => 'required|numeric|min:0',
-            'status' => 'required|in:scheduled,in_progress,completed,cancelled',
+            'status' => 'required|in:active,cancelled,completed',
             'notes' => 'nullable|string',
         ]);
 
@@ -58,7 +60,10 @@ class TripController extends Controller
                 ->withInput();
         }
 
-        Trip::create($request->all());
+        $data = $request->all();
+        $data['trip_code'] = 'TP' . time() . rand(1000, 9999);
+
+        Trip::create($data);
 
         return redirect()->route('admin.trips.index')
             ->with('success', 'Chuyến xe đã được tạo thành công.');
@@ -69,7 +74,7 @@ class TripController extends Controller
      */
     public function show(Trip $trip)
     {
-        $trip->load(['route', 'vehicle', 'driver', 'tickets.user']);
+        $trip->load(['line', 'vehicle', 'driver', 'tickets.user']);
         return view('admin.trips.show', compact('trip'));
     }
 
@@ -78,11 +83,11 @@ class TripController extends Controller
      */
     public function edit(Trip $trip)
     {
-        $routes = Route::where('status', 'active')->get();
+        $lines = Line::where('status', 'active')->get();
         $vehicles = Vehicle::where('status', 'active')->get();
         $drivers = Driver::where('status', 'active')->get();
 
-        return view('admin.trips.edit', compact('trip', 'routes', 'vehicles', 'drivers'));
+        return view('admin.trips.edit', compact('trip', 'lines', 'vehicles', 'drivers'));
     }
 
     /**
@@ -91,13 +96,13 @@ class TripController extends Controller
     public function update(Request $request, Trip $trip)
     {
         $validator = Validator::make($request->all(), [
-            'route_id' => 'required|exists:routes,id',
+            'line_id' => 'required|exists:lines,id',
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'required|exists:drivers,id',
-            'departure_time' => 'required|date',
-            'estimated_arrival' => 'required|date|after:departure_time',
+            'departure_time' => 'required|date_format:Y-m-d H:i:s',
+            'arrival_time' => 'required|date_format:Y-m-d H:i:s|after:departure_time',
             'price' => 'required|numeric|min:0',
-            'status' => 'required|in:scheduled,in_progress,completed,cancelled',
+            'status' => 'required|in:active,cancelled,completed',
             'notes' => 'nullable|string',
         ]);
 

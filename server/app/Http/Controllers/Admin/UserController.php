@@ -34,12 +34,11 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:100',
-            'email' => 'required|string|email|max:100|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required|string|max:20|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,staff,customer',
-            'address' => 'nullable|string',
+            'role_id' => 'required|exists:roles,id',
             'status' => 'required|in:active,inactive,banned',
         ]);
 

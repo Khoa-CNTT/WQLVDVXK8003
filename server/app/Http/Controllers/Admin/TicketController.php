@@ -17,7 +17,7 @@ class TicketController extends Controller
      */
     public function index()
     {
-        $tickets = Ticket::with(['trip.route', 'user'])
+        $tickets = Ticket::with(['trip.line', 'user'])
             ->latest()
             ->paginate(10);
 
@@ -29,7 +29,7 @@ class TicketController extends Controller
      */
     public function create()
     {
-        $trips = Trip::with('route')
+        $trips = Trip::with('line')
             ->where('status', 'scheduled')
             ->get();
 
@@ -76,7 +76,7 @@ class TicketController extends Controller
      */
     public function show(Ticket $ticket)
     {
-        $ticket->load(['trip.route', 'trip.driver', 'trip.vehicle', 'user']);
+        $ticket->load(['trip.line', 'trip.driver', 'trip.vehicle', 'user']);
         return view('admin.tickets.show', compact('ticket'));
     }
 
@@ -85,7 +85,7 @@ class TicketController extends Controller
      */
     public function edit(Ticket $ticket)
     {
-        $trips = Trip::with('route')
+        $trips = Trip::with('line')
             ->where('status', 'scheduled')
             ->orWhere('id', $ticket->trip_id)
             ->get();
@@ -140,7 +140,7 @@ class TicketController extends Controller
      */
     public function print(Ticket $ticket)
     {
-        $ticket->load(['trip.route', 'trip.driver', 'trip.vehicle', 'user']);
+        $ticket->load(['trip.line', 'trip.driver', 'trip.vehicle', 'user']);
         return view('admin.tickets.print', compact('ticket'));
     }
 

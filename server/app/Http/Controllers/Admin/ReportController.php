@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Ticket;
 use App\Models\Trip;
 use App\Models\Route;
+use App\Models\Line;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -204,43 +205,36 @@ class ReportController extends Controller
      */
     public function routes(Request $request)
     {
-        $startDate = $request->input('start_date', Carbon::now()->subMonths(6)->toDateString());
-        $endDate = $request->input('end_date', Carbon::now()->toDateString());
-
-        // Thống kê số lượng vé và doanh thu theo tuyến đường
-        $routeStats = DB::table('tickets')
+        $period = $request->input('period', 'month');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        if (!$startDate) {
+            if ($period == 'day') {
+                $startDate = Carbon::now()->subDays(30)->toDateString();
+            } elseif ($period == 'month') {
+                $startDate = Carbon::now()->subMonths(12)->startOfMonth()->toDateString();
+            } else {
+                $startDate = Carbon::now()->subYears(5)->startOfYear()->toDateString();
+            }
+        }
+        if (!$endDate) {
+            $endDate = Carbon::now()->toDateString();
+        }
+        $lineStats = DB::table('tickets')
             ->join('trips', 'tickets.trip_id', '=', 'trips.id')
-            ->join('routes', 'trips.route_id', '=', 'routes.id')
+            ->join('lines', 'trips.line_id', '=', 'lines.id')
             ->whereBetween('tickets.created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->where('tickets.status', 'completed')
-            ->where('tickets.payment_status', 'paid')
             ->select(
-                'routes.id',
-                'routes.departure',
-                'routes.destination',
-                DB::raw('COUNT(tickets.id) as ticket_count'),
+                'lines.id',
+                'lines.name',
+                DB::raw('COUNT(*) as total_tickets'),
                 DB::raw('SUM(tickets.price) as total_revenue')
             )
-            ->groupBy('routes.id', 'routes.departure', 'routes.destination')
-            ->orderByDesc('ticket_count')
+            ->groupBy('lines.id', 'lines.name')
+            ->orderBy('total_revenue', 'desc')
             ->get();
-
-        // Chuẩn bị dữ liệu cho biểu đồ
-        $routeLabels = $routeStats->map(function($item) {
-            return $item->departure . ' - ' . $item->destination;
-        });
-
-        $ticketCountData = $routeStats->pluck('ticket_count');
-        $revenueData = $routeStats->pluck('total_revenue');
-
-        return view('admin.reports.routes', compact(
-            'startDate',
-            'endDate',
-            'routeStats',
-            'routeLabels',
-            'ticketCountData',
-            'revenueData'
-        ));
+        return view('admin.reports.lines', compact('period', 'startDate', 'endDate', 'lineStats'));
     }
 
     /**
