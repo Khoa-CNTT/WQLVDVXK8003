@@ -111,8 +111,7 @@ const Customers = () => {
 
   const statusMap = {
     active: { className: 'text-green-600 font-bold', label: 'Hoạt động' },
-    inactive: { className: 'text-red-600 font-bold', label: 'Không hoạt động' },
-    banned: { className: 'text-gray-600 font-bold', label: 'Bị khóa' },
+    banned: { className: 'text-red-600 font-bold', label: 'Bị khóa' },
   };
 
   const columns = [
@@ -122,13 +121,13 @@ const Customers = () => {
     { label: 'Số điện thoại', key: 'phone' },
     {
       label: 'Vai trò',
-      key: 'role.name',
-      render: (value) => {
+      key: 'role_id',
+      render: (roleId) => {
         const roleMap = {
-          admin: { label: 'Admin', className: 'text-orange-500 font-bold' },
-          customer: { label: 'Customer', className: 'text-green-600 font-bold' },
+          1: { label: 'Admin', className: 'text-orange-500 font-bold' },
+          2: { label: 'Customer', className: 'text-green-600 font-bold' },
         };
-        const role = roleMap[value] || { label: value || 'N/A', className: '' };
+        const role = roleMap[roleId] || { label: 'N/A', className: '' };
         return <span className={role.className}>{role.label}</span>;
       },
     },
@@ -242,7 +241,6 @@ const Customers = () => {
               onChange={(e) => setFormUser({ ...formUser, status: e.target.value })}
             >
               <option value="active">Hoạt động</option>
-              <option value="inactive">Không hoạt động</option>
               <option value="banned">Bị khóa</option>
             </select>
           </div>
