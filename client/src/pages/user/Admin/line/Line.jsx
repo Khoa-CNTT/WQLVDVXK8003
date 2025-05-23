@@ -1,203 +1,276 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import HomeAdminLayout from '../../../../layouts/AdminLayout';
-import ReusableModal from '../../../../components/ReusableModal/ReusableModal'; // Đường dẫn modal của bạn
+import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
+import { useApi } from '../../../../hooks/useApi';
+import { fetchSortedData } from '../../../../utils/fetchSortedData';
 
-const Line = () => {
-const [lines, setLines] = useState([
-  {
-    id: 1,
-    name: 'Sài Gòn - Nha Trang',
-    seats: 40,
-    departureDate: '2025-06-01',
-    price: 250000,
-  },
-  {
-    id: 2,
-    name: 'Hà Nội - Đà Nẵng',
-    seats: 38,
-    departureDate: '2025-06-05',
-    price: 320000,
-  },
-  {
-    id: 3,
-    name: 'Hải Phòng - Quảng Ninh',
-    seats: 35,
-    departureDate: '2025-06-03',
-    price: 180000,
-  },
-  {
-    id: 4,
-    name: 'Cần Thơ - Vũng Tàu',
-    seats: 42,
-    departureDate: '2025-06-07',
-    price: 290000,
-  },
-  {
-    id: 5,
-    name: 'Huế - Nha Trang',
-    seats: 36,
-    departureDate: '2025-06-04',
-    price: 270000,
-  },
-  {
-    id: 6,
-    name: 'Sài Gòn - Đà Lạt',
-    seats: 40,
-    departureDate: '2025-06-06',
-    price: 230000,
-  },
-]);
+const Lines = () => {
+  const api = useApi();
 
+  const [lines, setLines] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [editingLine, setEditingLine] = useState(null);
-  const [newLine, setNewLine] = useState({
-    name: '',
-    seats: '',
-    departureDate: '',
-    price: '',
+
+  const [formLine, setFormLine] = useState({
+    departure: '',
+    destination: '',
+    distance: '',
+    duration: '',
+    base_price: '',
+    description: '',
+    status: 'active',
   });
 
-  const handleEdit = (line) => {
+  // Load lines and vehicles
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const linesData = await fetchSortedData(api, '/admin/lines');
+        const vehiclesData = await fetchSortedData(api, '/admin/vehicles');
+        setLines(linesData);
+        setVehicles(vehiclesData);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Hàm tính tổng số ghế của line dựa vào trips và vehicles
+  const calculateTotalSeats = (trips) => {
+    if (!trips || trips.length === 0) return 0;
+    let totalSeats = 0;
+    trips.forEach(trip => {
+      const vehicle = vehicles.find(v => v.id === trip.vehicle_id);
+      if (vehicle) {
+        totalSeats += vehicle.capacity;
+      }
+    });
+    return totalSeats;
+  };
+
+  // Lấy ngày đi đầu tiên trong trips của line
+  const getFirstDepartureDate = (trips) => {
+    if (!trips || trips.length === 0) return '-';
+    // Lấy ngày departure_time nhỏ nhất
+    const sortedTrips = trips.slice().sort((a, b) => new Date(a.departure_time) - new Date(b.departure_time));
+    const firstDate = new Date(sortedTrips[0].departure_time);
+    return firstDate.toLocaleDateString('vi-VN');
+  };
+
+  const handleSaveLine = async () => {
+    try {
+      const payload = {
+        departure: formLine.departure,
+        destination: formLine.destination,
+        distance: parseFloat(formLine.distance),
+        duration: formLine.duration,
+        base_price: parseFloat(formLine.base_price),
+        description: formLine.description,
+        status: formLine.status,
+      };
+
+      if (editingLine) {
+        await api.put(`/admin/lines/${editingLine.id}`, payload);
+        alert('Cập nhật tuyến thành công');
+      } else {
+        await api.post('/admin/lines', payload);
+        alert('Tạo tuyến thành công');
+      }
+
+      setShowModal(false);
+      setEditingLine(null);
+      resetForm();
+
+      // Reload data
+      const linesData = await fetchSortedData(api, '/admin/lines');
+      setLines(linesData);
+
+    } catch (error) {
+      console.error('Lỗi khi lưu tuyến:', error);
+      alert('Lỗi khi lưu tuyến');
+    }
+  };
+
+  const handleDeleteLine = async (id) => {
+    if (window.confirm(`Bạn có chắc muốn xóa tuyến ID ${id}?`)) {
+      try {
+        await api.delete(`/admin/lines/${id}`);
+        alert('Xóa tuyến thành công');
+        const linesData = await fetchSortedData(api, '/admin/lines');
+        setLines(linesData);
+      } catch (error) {
+        alert('Lỗi khi xóa tuyến');
+      }
+    }
+  };
+
+  const handleEditLine = (line) => {
     setEditingLine(line);
-    setNewLine({
-      name: line.name,
-      seats: line.seats,
-      departureDate: line.departureDate,
-      price: line.price,
+    setFormLine({
+      departure: line.departure || '',
+      destination: line.destination || '',
+      distance: line.distance || '',
+      duration: line.duration || '',
+      base_price: line.base_price || '',
+      description: line.description || '',
+      status: line.status || 'active',
     });
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm(`Bạn chắc chắn muốn xóa tuyến đường ID ${id}?`)) {
-      setLines(lines.filter((line) => line.id !== id));
-    }
-  };
-
-  const handleViewHistory = (id) => {
-    alert(`Xem lịch sử đặt vé của tuyến ID: ${id}`);
-  };
-
-  const handleSaveLine = () => {
-    if (editingLine) {
-      // Cập nhật tuyến đường
-      setLines(lines.map(line =>
-        line.id === editingLine.id
-          ? {
-              ...editingLine,
-              ...newLine,
-              seats: parseInt(newLine.seats),
-              price: parseInt(newLine.price),
-            }
-          : line
-      ));
-    } else {
-      // Thêm tuyến đường mới
-      const newId = lines.length ? Math.max(...lines.map((l) => l.id)) + 1 : 1;
-      setLines([
-        ...lines,
-        {
-          id: newId,
-          ...newLine,
-          seats: parseInt(newLine.seats),
-          price: parseInt(newLine.price),
-        },
-      ]);
-    }
-
-    // Reset form và đóng modal
-    setNewLine({ name: '', seats: '', departureDate: '', price: '' });
-    setEditingLine(null);
-    setShowModal(false);
+  const resetForm = () => {
+    setFormLine({
+      departure: '',
+      destination: '',
+      distance: '',
+      duration: '',
+      base_price: '',
+      description: '',
+      status: 'active',
+    });
   };
 
   const columns = [
     { label: 'ID', key: 'id' },
-    { label: 'Tuyến đường', key: 'name' },
-    { label: 'Số ghế', key: 'seats' },
-    { label: 'Ngày đi', key: 'departureDate' },
-    { label: 'Đơn giá', key: 'price' },
-    { label: 'Hành động', key: 'actions' },
+    {
+      label: 'Tuyến đường',
+      key: 'route',
+      render: (_, line) => (
+        <span>{line.departure} - {line.destination}</span>
+      ),
+    },
+    {
+      label: 'Số ghế',
+      key: 'total_seats',
+    },
+    {
+      label: 'Ngày đi',
+      key: 'departure_date',
+    },
+    {
+      label: 'Đơn giá',
+      key: 'base_price',
+      render: (value) => value ? value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : '-',
+    },
+    {
+      label: 'Hành động',
+      key: 'actions',
+    },
   ];
 
   return (
     <HomeAdminLayout>
       <div className="ticket-container">
-        <h1 className="page-title">Danh Sách Tuyến Đường</h1>
+        <h1 className="page-title">Danh Sách Tuyến</h1>
         <div className="action-bar">
           <button
             className="add-btn"
             onClick={() => {
-              setEditingLine(null);
-              setNewLine({ name: '', seats: '', departureDate: '', price: '' });
+              resetForm();
               setShowModal(true);
             }}
           >
-            Thêm Tuyến Đường
+            Thêm Tuyến
           </button>
         </div>
-
         <ReusableTable
           columns={columns}
-          data={lines.map((line) => ({
+          data={lines.map(line => ({
             ...line,
-            price: line.price.toLocaleString('vi-VN') + ' VNĐ',
+            total_seats: calculateTotalSeats(line.trips),
+            departure_date: getFirstDepartureDate(line.trips),
+            base_price: parseFloat(line.base_price),
             actions: (
               <div className="action-buttons">
-                <button className="add-btn" onClick={() => handleViewHistory(line.id)}>Lịch sử đặt vé</button>
-                <button className="edit-btn" onClick={() => handleEdit(line)}>Sửa</button>
-                <button className="delete-btn" onClick={() => handleDelete(line.id)}>Xóa</button>
+                <button className="add-btn" onClick={() => alert(`Xem lịch sử đặt vé cho tuyến ID ${line.id}`)}>Lịch sử đặt vé</button>
+                <button className="edit-btn" onClick={() => handleEditLine(line)}>Sửa</button>
+                <button className="delete-btn" onClick={() => handleDeleteLine(line.id)}>Xóa</button>
               </div>
             ),
           }))}
+          loading={loading}
         />
 
         <ReusableModal
-          title={editingLine ? 'Sửa Tuyến Đường' : 'Thêm Tuyến Đường Mới'}
+          title={editingLine ? 'Sửa Tuyến' : 'Thêm Tuyến'}
           show={showModal}
           onClose={() => {
             setShowModal(false);
             setEditingLine(null);
-            setNewLine({ name: '', seats: '', departureDate: '', price: '' });
           }}
           onSubmit={handleSaveLine}
         >
           <div className="form-group">
-            <label>Tên tuyến:</label>
+            <label>Nơi xuất phát:</label>
             <input
               type="text"
-              value={newLine.name}
-              onChange={(e) => setNewLine({ ...newLine, name: e.target.value })}
-              placeholder="VD: Sài Gòn - Huế"
+              value={formLine.departure}
+              onChange={(e) => setFormLine({ ...formLine, departure: e.target.value })}
+              placeholder="VD: Đà Nẵng"
             />
           </div>
           <div className="form-group">
-            <label>Số ghế:</label>
+            <label>Nơi đến:</label>
+            <input
+              type="text"
+              value={formLine.destination}
+              onChange={(e) => setFormLine({ ...formLine, destination: e.target.value })}
+              placeholder="VD: Quảng Bình"
+            />
+          </div>
+          <div className="form-group">
+            <label>Khoảng cách (km):</label>
             <input
               type="number"
-              value={newLine.seats}
-              onChange={(e) => setNewLine({ ...newLine, seats: e.target.value })}
-              placeholder="VD: 40"
+              value={formLine.distance}
+              onChange={(e) => setFormLine({ ...formLine, distance: e.target.value })}
+              placeholder="VD: 300"
             />
           </div>
           <div className="form-group">
-            <label>Ngày đi:</label>
+            <label>Thời gian (phút):</label>
             <input
-              type="date"
-              value={newLine.departureDate}
-              onChange={(e) => setNewLine({ ...newLine, departureDate: e.target.value })}
+              type="text"
+              value={formLine.duration}
+              onChange={(e) => setFormLine({ ...formLine, duration: e.target.value })}
+              placeholder="VD: 240"
             />
           </div>
           <div className="form-group">
-            <label>Giá vé (VNĐ):</label>
+            <label>Đơn giá (VND):</label>
             <input
               type="number"
-              value={newLine.price}
-              onChange={(e) => setNewLine({ ...newLine, price: e.target.value })}
+              value={formLine.base_price}
+              onChange={(e) => setFormLine({ ...formLine, base_price: e.target.value })}
               placeholder="VD: 300000"
             />
+          </div>
+          <div className="form-group">
+            <label>Mô tả:</label>
+            <textarea
+              value={formLine.description}
+              onChange={(e) => setFormLine({ ...formLine, description: e.target.value })}
+              placeholder="Mô tả tuyến đường"
+            />
+          </div>
+          <div className="form-group">
+            <label>Trạng thái:</label>
+            <select
+              value={formLine.status}
+              onChange={(e) => setFormLine({ ...formLine, status: e.target.value })}
+            >
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Không hoạt động</option>
+            </select>
           </div>
         </ReusableModal>
       </div>
@@ -205,4 +278,4 @@ const [lines, setLines] = useState([
   );
 };
 
-export default Line;
+export default Lines;
