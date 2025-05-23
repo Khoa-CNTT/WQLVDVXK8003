@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './index.css';
+import LoadingTable from '../LoadingTable';
 
 const ReusableTable = ({ columns, data, loading, error, onEdit, onDelete }) => {
   const rowsPerPage = 5;
@@ -18,7 +19,7 @@ const ReusableTable = ({ columns, data, loading, error, onEdit, onDelete }) => {
   return (
     <div className="table-container">
       {loading ? (
-        <div className="table-loading">Đang tải dữ liệu...</div>
+        <LoadingTable/>
       ) : error ? (
         <div className="table-error">{error}</div>
       ) : (
