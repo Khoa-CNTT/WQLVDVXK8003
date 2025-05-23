@@ -1,142 +1,178 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import HomeAdminLayout from '../../../../layouts/AdminLayout';
-import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
+import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
+import { useApi } from '../../../../hooks/useApi';
+import { fetchSortedData } from '../../../../utils/fetchSortedData';
 
 const Trips = () => {
-  const [trips, setTrips] = useState([
-    {
-      id: 1,
-      route: 'Hà Nội - Sài Gòn',
-      vehicle: 'Xe giường nằm 45 chỗ',
-      driver: 'Nguyễn Văn A',
-      departure_date: '2025-05-20',
-      departure_time: '08:00',
-      status: 'completed',
-    },
-    {
-      id: 2,
-      route: 'Đà Nẵng - Nha Trang',
-      vehicle: 'Xe limousine 16 chỗ',
-      driver: 'Trần Văn B',
-      departure_date: '2025-05-22',
-      departure_time: '13:30',
-      status: 'pending',
-    },
-    {
-      id: 3,
-      route: 'Huế - Hà Nội',
-      vehicle: 'Xe thường 29 chỗ',
-      driver: 'Lê Thị C',
-      departure_date: '2025-05-25',
-      departure_time: '06:00',
-      status: 'canceled',
-    },
-    {
-      id: 4,
-      route: 'Sài Gòn - Phan Thiết',
-      vehicle: 'Xe giường nằm 40 chỗ',
-      driver: 'Phạm Văn D',
-      departure_date: '2025-05-28',
-      departure_time: '10:15',
-      status: 'completed',
-    },
-    {
-      id: 5,
-      route: 'Nha Trang - Đà Lạt',
-      vehicle: 'Xe limousine 12 chỗ',
-      driver: 'Trần Thị E',
-      departure_date: '2025-06-01',
-      departure_time: '14:45',
-      status: 'pending',
-    },
-    {
-      id: 6,
-      route: 'Hà Nội - Hải Phòng',
-      vehicle: 'Xe thường 29 chỗ',
-      driver: 'Nguyễn Văn F',
-      departure_date: '2025-06-05',
-      departure_time: '07:30',
-      status: 'completed',
-    },
+  const api = useApi();
 
-  ]);
+  const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [lines, setLines] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [editingTrip, setEditingTrip] = useState(null);
-  const [newTrip, setNewTrip] = useState({
-    route: '',
-    vehicle: '',
-    driver: '',
-    departure_date: '',
+
+  const [formTrip, setFormTrip] = useState({
+    line_id: '',
+    vehicle_id: '',
+    driver_id: '',
     departure_time: '',
-    status: 'pending',
+    arrival_time: '',
+    price: '',
+    status: 'scheduled',
   });
 
-  const handleEdit = (trip) => {
+  const statusMap = {
+    scheduled: { className: 'text-blue-500 font-bold', label: 'Đã lên lịch' },
+    in_progress: { className: 'text-yellow-600 font-bold', label: 'Đang chạy' },
+    completed: { className: 'text-green-600 font-bold', label: 'Đã hoàn thành' },
+    cancelled: { className: 'text-red-600 font-bold', label: 'Đã hủy' },
+  };
+
+  useEffect(() => {
+    loadTrips();
+  }, []);
+
+  const loadTrips = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchSortedData(api, '/admin/trips');
+      setTrips(data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  function formatDateTime(datetimeLocalStr) {
+    if (!datetimeLocalStr) return '';
+    // datetimeLocalStr: "2025-05-23T15:30"
+    return datetimeLocalStr.replace('T', ' ') + ':00';
+    // chuyển thành "2025-05-23 15:30:00"
+  }
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [lineRes, driverRes, vehicleRes] = await Promise.all([
+          api.get('/admin/lines'),
+          api.get('/admin/drivers'),
+          api.get('/admin/vehicles'),
+        ]);
+        const lineData = lineRes.data
+        const driverData = driverRes.data.data.data
+        const vehicleData = vehicleRes.data.data.data
+
+        setLines(lineData);
+        setDrivers(driverData);
+        setVehicles(vehicleData);
+      } catch (err) {
+        console.error('Lỗi tải danh sách:', err);
+      }
+    };
+
+    fetchOptions();
+    loadTrips(); // đã định nghĩa ở trên
+  }, []);
+
+  const resetForm = () => {
+    setFormTrip({
+      line_id: '',
+      vehicle_id: '',
+      driver_id: '',
+      departure_time: '',
+      arrival_time: '',
+      price: '',
+      status: 'scheduled',
+    });
+  };
+
+  const handleEditTrip = (trip) => {
     setEditingTrip(trip);
-    setNewTrip({
-      route: trip.route,
-      vehicle: trip.vehicle,
-      driver: trip.driver,
-      departure_date: trip.departure_date,
-      departure_time: trip.departure_time,
+    setFormTrip({
+      line_id: trip.line_id,
+      vehicle_id: trip.vehicle_id,
+      driver_id: trip.driver_id,
+      departure_time: trip.departure_time?.slice(0, 16),
+      arrival_time: trip.arrival_time?.slice(0, 16),
+      price: trip.price,
       status: trip.status,
     });
     setShowModal(true);
   };
 
-  const handleDelete = (trip) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa chuyến xe ID ${trip.id}?`)) {
-      setTrips(trips.filter((t) => t.id !== trip.id));
+  const handleDeleteTrip = async (id) => {
+    if (window.confirm(`Bạn có chắc muốn xóa chuyến xe ID ${id}?`)) {
+      try {
+        await api.delete(`/admin/trips/${id}`);
+        alert('Xóa chuyến xe thành công');
+        loadTrips();
+      } catch (err) {
+        alert('Lỗi khi xóa chuyến xe');
+      }
     }
   };
 
-  const handleSaveTrip = () => {
-    if (editingTrip) {
-      setTrips(trips.map(t =>
-        t.id === editingTrip.id ? { ...editingTrip, ...newTrip } : t
-      ));
-    } else {
-      const newId = trips.length ? Math.max(...trips.map(t => t.id)) + 1 : 1;
-      setTrips([...trips, { id: newId, ...newTrip }]);
-    }
+  const handleSaveTrip = async () => {
+    try {
+      const payload = {
+        line_id: formTrip.line_id,
+        vehicle_id: formTrip.vehicle_id,
+        driver_id: formTrip.driver_id,
+        departure_time: formatDateTime(formTrip.departure_time),
+        arrival_time: formatDateTime(formTrip.arrival_time),
+        price: formTrip.price,
+        status: formTrip.status,
+      };
 
-    setShowModal(false);
-    setEditingTrip(null);
-    setNewTrip({
-      route: '',
-      vehicle: '',
-      driver: '',
-      departure_date: '',
-      departure_time: '',
-      status: 'pending',
-    });
+      console.log('payload trước khi gửi', payload);
+
+      if (editingTrip) {
+        await api.put(`/admin/trips/${editingTrip.id}`, payload);
+        alert('Cập nhật chuyến xe thành công');
+      } else {
+        await api.post('/admin/trips', payload);
+        alert('Tạo chuyến xe thành công');
+      }
+
+      setShowModal(false);
+      setEditingTrip(null);
+      resetForm();
+      loadTrips();
+    } catch (err) {
+      alert('Lỗi khi lưu chuyến xe');
+    }
   };
 
   const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'route', label: 'Tuyến đường' },
-    { key: 'vehicle', label: 'Phương tiện' },
-    { key: 'driver', label: 'Tài xế' },
-    { key: 'departure_date', label: 'Ngày khởi hành' },
-    { key: 'departure_time', label: 'Thời gian khởi hành' },
+    { label: 'ID', key: 'id' },
+    { label: 'Tuyến đường', key: 'line.departure', render: (_, row) => `${row.line?.departure} → ${row.line?.destination}` },
+    { label: 'Phương tiện', key: 'vehicle.name', render: (_, row) => row.vehicle?.name },
+    { label: 'Tài xế', key: 'driver.name', render: (_, row) => row.driver?.name },
+    { label: 'Ngày khởi hành', key: 'departure_time', render: val => new Date(val).toLocaleDateString('vi-VN') },
+    { label: 'Thời gian khởi hành', key: 'departure_time', render: val => new Date(val).toLocaleTimeString('vi-VN') },
     {
-      key: 'status',
-      label: 'Trạng thái',
-      render: (status) => {
-        const map = {
-          completed: 'status-success',
-          pending: 'status-pending',
-          canceled: 'status-canceled',
-        };
-        const label = {
-          completed: 'Hoàn thành',
-          pending: 'Chờ chạy',
-          canceled: 'Đã hủy',
-        };
-        return <span className={map[status]}>{label[status]}</span>;
-      },
+      label: 'Trạng thái', key: 'status',
+      render: value => {
+        const s = statusMap[value] || { className: '', label: value };
+        return <span className={s.className}>{s.label}</span>;
+      }
+    },
+    {
+      label: 'Hành động', key: 'actions',
+      render: (_, row) => (
+        <div className="action-buttons">
+          <button className="edit-btn" onClick={() => handleEditTrip(row)}>Sửa</button>
+          <button className="delete-btn" onClick={() => handleDeleteTrip(row.id)}>Xóa</button>
+        </div>
+      )
     },
   ];
 
@@ -144,40 +180,21 @@ const Trips = () => {
     <HomeAdminLayout>
       <div className="ticket-container">
         <h1 className="page-title">Danh Sách Chuyến Xe</h1>
-
         <div className="action-bar">
           <button
             className="add-btn"
             onClick={() => {
-              setEditingTrip(null);
-              setNewTrip({
-                route: '',
-                vehicle: '',
-                driver: '',
-                departure_date: '',
-                departure_time: '',
-                status: 'pending',
-              });
+              resetForm();
               setShowModal(true);
             }}
           >
             Thêm Chuyến Xe
           </button>
         </div>
-
         <ReusableTable
-          columns={[...columns, { key: 'actions', label: 'Hành động' }]}
-          data={trips.map((trip) => ({
-            ...trip,
-            actions: (
-              <div className="action-buttons">
-                <button className="edit-btn" onClick={() => handleEdit(trip)}>Sửa</button>
-                <button className="delete-btn" onClick={() => handleDelete(trip)}>Xóa</button>
-              </div>
-            ),
-          }))}
-          loading={false}
-          error={null}
+          columns={columns}
+          data={trips}
+          loading={loading}
         />
 
         <ReusableModal
@@ -186,69 +203,72 @@ const Trips = () => {
           onClose={() => {
             setShowModal(false);
             setEditingTrip(null);
-            setNewTrip({
-              route: '',
-              vehicle: '',
-              driver: '',
-              departure_date: '',
-              departure_time: '',
-              status: 'pending',
-            });
           }}
           onSubmit={handleSaveTrip}
         >
           <div className="form-group">
-            <label>Tuyến đường</label>
-            <input
-              type="text"
-              value={newTrip.route}
-              onChange={(e) => setNewTrip({ ...newTrip, route: e.target.value })}
-              placeholder="VD: Đà Nẵng - Huế"
-            />
-          </div>
-          <div className="form-group">
-            <label>Phương tiện</label>
-            <input
-              type="text"
-              value={newTrip.vehicle}
-              onChange={(e) => setNewTrip({ ...newTrip, vehicle: e.target.value })}
-              placeholder="VD: Xe 45 chỗ"
-            />
-          </div>
-          <div className="form-group">
-            <label>Tài xế</label>
-            <input
-              type="text"
-              value={newTrip.driver}
-              onChange={(e) => setNewTrip({ ...newTrip, driver: e.target.value })}
-              placeholder="VD: Nguyễn Văn A"
-            />
-          </div>
-          <div className="form-group">
-            <label>Ngày khởi hành</label>
-            <input
-              type="date"
-              value={newTrip.departure_date}
-              onChange={(e) => setNewTrip({ ...newTrip, departure_date: e.target.value })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Thời gian khởi hành</label>
-            <input
-              type="time"
-              value={newTrip.departure_time}
-              onChange={(e) => setNewTrip({ ...newTrip, departure_time: e.target.value })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Trạng thái</label>
+            <label>Tuyến đường:</label>
             <select
-              value={newTrip.status}
-              onChange={(e) => setNewTrip({ ...newTrip, status: e.target.value })}
+              value={formTrip.line_id}               // sửa từ route_id thành line_id
+              onChange={(e) => setFormTrip({ ...formTrip, line_id: e.target.value })} // sửa từ route_id thành line_id
             >
-              <option value="pending">Chờ chạy</option>
-              <option value="completed">Hoàn thành</option>
-              <option value="canceled">Đã hủy</option>
+              <option value="">-- Chọn tuyến đường --</option>
+              {lines.map((line) => (
+                <option key={line.id} value={line.id}>
+                  {line.departure} → {line.destination}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Phương tiện:</label>
+            <select
+              value={formTrip.vehicle_id}
+              onChange={(e) => setFormTrip({ ...formTrip, vehicle_id: e.target.value })}
+            >
+              <option value="">-- Chọn phương tiện --</option>
+              {vehicles.map((vehicle) => (
+                <option key={vehicle.id} value={vehicle.id}>
+                  {vehicle.name} ({vehicle.license_plate})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Tài xế:</label>
+            <select
+              value={formTrip.driver_id}
+              onChange={(e) => setFormTrip({ ...formTrip, driver_id: e.target.value })}
+            >
+              <option value="">-- Chọn tài xế --</option>
+              {drivers.map((driver) => (
+                <option key={driver.id} value={driver.id}>
+                  {driver.name} - {driver.phone}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Ngày & giờ khởi hành:</label>
+            <input type="datetime-local" value={formTrip.departure_time} onChange={e => setFormTrip({ ...formTrip, departure_time: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Giờ đến dự kiến:</label>
+            <input type="datetime-local" value={formTrip.arrival_time} onChange={e => setFormTrip({ ...formTrip, arrival_time: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Giá vé:</label>
+            <input type="number" value={formTrip.price} onChange={e => setFormTrip({ ...formTrip, price: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Trạng thái:</label>
+            <select value={formTrip.status} onChange={e => setFormTrip({ ...formTrip, status: e.target.value })}>
+              <option value="scheduled">Đã lên lịch</option>
+              <option value="in_progress">Đang chạy</option>
+              <option value="completed">Đã hoàn thành</option>
+              <option value="cancelled">Đã hủy</option>
             </select>
           </div>
         </ReusableModal>
