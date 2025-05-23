@@ -4,6 +4,8 @@ import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
 import { useApi } from '../../../../hooks/useApi';
 import { fetchSortedData } from '../../../../utils/fetchSortedData';
+import { toast } from 'react-toastify';
+import { confirmAction } from '../../../../utils/confirm';
 
 const Vehicles = () => {
   const api = useApi();
@@ -88,7 +90,7 @@ const Vehicles = () => {
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || 'Lỗi khi cập nhật phương tiện';
-      alert(message);
+      toast.error(message);
       throw new Error(message);
     }
   };
@@ -98,25 +100,30 @@ const Vehicles = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm(`Xóa xe có ID: ${id}?`)) {
-      try {
-        await deleteVehicleAPI(id);
-        setRefreshKey(prev => prev + 1);
-        alert('Xóa thành công!');
-      } catch (err) {
-        alert('Lỗi khi xoá phương tiện');
+    confirmAction({
+      title: "Bạn có chắc muốn xoá phương tiện này?",
+      text: "Dữ liệu sẽ không thể khôi phục.",
+      onConfirm: () => {
+        deleteVehicleAPI(id)
+          .then(() => {
+            toast.success("Đã xoá thành công");
+            setRefreshKey(prev => prev + 1); 
+          })
+          .catch(() => {
+            toast.error("Xoá thất bại");
+          });
       }
-    }
+    });
   };
 
   const handleSaveVehicle = async () => {
     try {
       if (editingVehicle) {
         await updateVehicleAPI(editingVehicle.id, newVehicle);
-        alert('Cập nhật phương tiện thành công!');
+        toast.success('Cập nhật phương tiện thành công!');
       } else {
         await createVehicleAPI(newVehicle);
-        alert('Thêm phương tiện thành công!');
+        toast.success('Thêm phương tiện thành công!');
       }
 
       setShowModal(false);
@@ -133,7 +140,7 @@ const Vehicles = () => {
       });
       setRefreshKey(prev => prev + 1);
     } catch (error) {
-      console.error('Lỗi khi lưu phương tiện:', error);
+      toast.error('Lỗi khi lưu phương tiện:', error);
     }
   };
 
@@ -161,6 +168,7 @@ const Vehicles = () => {
   const columns = [
     { label: 'ID', key: 'id' },
     { label: 'Biển số xe', key: 'licensePlate' },
+    { label: 'Tên xe', key: 'name' },
     { label: 'Loại xe', key: 'type' },
     { label: 'Số ghế', key: 'seats' },
     { label: 'Năm sản xuất', key: 'year' },
@@ -239,18 +247,22 @@ const Vehicles = () => {
             <label>Tên xe:</label>
             <input
               type="text"
+              placeholder="Nhập tên xe"
               value={newVehicle.name}
               onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
             />
           </div>
+
           <div className="form-group">
             <label>Biển số xe:</label>
             <input
               type="text"
+              placeholder="VD: 43A-12345"
               value={newVehicle.license_plate}
               onChange={(e) => setNewVehicle({ ...newVehicle, license_plate: e.target.value })}
             />
           </div>
+
           <div className="form-group">
             <label>Loại xe:</label>
             <select
@@ -264,30 +276,37 @@ const Vehicles = () => {
               <option value="vip">VIP</option>
             </select>
           </div>
+
           <div className="form-group">
             <label>Model:</label>
             <input
               type="text"
+              placeholder="VD: MEC E300"
               value={newVehicle.model}
               onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
             />
           </div>
+
           <div className="form-group">
             <label>Số ghế:</label>
             <input
               type="number"
+              placeholder="VD: 45"
               value={newVehicle.capacity}
               onChange={(e) => setNewVehicle({ ...newVehicle, capacity: e.target.value })}
             />
           </div>
+
           <div className="form-group">
             <label>Năm sản xuất:</label>
             <input
               type="number"
+              placeholder="VD: 2020"
               value={newVehicle.manufacture_year}
               onChange={(e) => setNewVehicle({ ...newVehicle, manufacture_year: e.target.value })}
             />
           </div>
+
           <div className="form-group">
             <label>Trạng thái:</label>
             <select
@@ -300,10 +319,12 @@ const Vehicles = () => {
               <option value="maintenance">Bảo trì</option>
             </select>
           </div>
+
           <div className="form-group">
             <label>Tiện nghi:</label>
             <input
               type="text"
+              placeholder="VD: Wifi, Máy lạnh, TV"
               value={newVehicle.amenities}
               onChange={(e) => setNewVehicle({ ...newVehicle, amenities: e.target.value })}
             />

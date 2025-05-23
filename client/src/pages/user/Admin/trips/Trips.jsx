@@ -25,14 +25,13 @@ const Trips = () => {
     departure_time: '',
     arrival_time: '',
     price: '',
-    status: 'scheduled',
+    status: 'active',
   });
 
   const statusMap = {
-    scheduled: { className: 'text-blue-500 font-bold', label: 'Đã lên lịch' },
-    in_progress: { className: 'text-yellow-600 font-bold', label: 'Đang chạy' },
-    completed: { className: 'text-green-600 font-bold', label: 'Đã hoàn thành' },
-    cancelled: { className: 'text-red-600 font-bold', label: 'Đã hủy' },
+    active: { className: 'text-sm text-blue-500 font-bold', label: 'Đã lên lịch' },
+    completed: { className: 'text-sm text-green-500 font-bold', label: 'Hoàn thành' },
+    cancelled: { className: 'text-sm text-red-500 font-bold', label: 'Đã hủy' },
   };
 
   useEffect(() => {
@@ -43,6 +42,7 @@ const Trips = () => {
     try {
       setLoading(true);
       const data = await fetchSortedData(api, '/admin/trips');
+      console.log('Tripdata', data)
       setTrips(data);
     } catch (err) {
       setError(err);
@@ -79,7 +79,7 @@ const Trips = () => {
     };
 
     fetchOptions();
-    loadTrips(); // đã định nghĩa ở trên
+    loadTrips();
   }, []);
 
   const resetForm = () => {
@@ -90,7 +90,7 @@ const Trips = () => {
       departure_time: '',
       arrival_time: '',
       price: '',
-      status: 'scheduled',
+      status: 'active',
     });
   };
 
@@ -160,8 +160,16 @@ const Trips = () => {
     { label: 'Thời gian khởi hành', key: 'departure_time', render: val => new Date(val).toLocaleTimeString('vi-VN') },
     {
       label: 'Trạng thái', key: 'status',
-      render: value => {
-        const s = statusMap[value] || { className: '', label: value };
+      render: (_, row) => {
+        const now = new Date();
+        const arrival = new Date(row.arrival_time);
+        let displayStatus = row.status;
+
+        if (row.status === 'active' && arrival < now) {
+          displayStatus = 'completed';
+        }
+
+        const s = statusMap[displayStatus] || { className: '', label: displayStatus };
         return <span className={s.className}>{s.label}</span>;
       }
     },
@@ -209,8 +217,8 @@ const Trips = () => {
           <div className="form-group">
             <label>Tuyến đường:</label>
             <select
-              value={formTrip.line_id}               // sửa từ route_id thành line_id
-              onChange={(e) => setFormTrip({ ...formTrip, line_id: e.target.value })} // sửa từ route_id thành line_id
+              value={formTrip.line_id}
+              onChange={(e) => setFormTrip({ ...formTrip, line_id: e.target.value })}
             >
               <option value="">-- Chọn tuyến đường --</option>
               {lines.map((line) => (
@@ -265,8 +273,7 @@ const Trips = () => {
           <div className="form-group">
             <label>Trạng thái:</label>
             <select value={formTrip.status} onChange={e => setFormTrip({ ...formTrip, status: e.target.value })}>
-              <option value="scheduled">Đã lên lịch</option>
-              <option value="in_progress">Đang chạy</option>
+              <option value="active">Đã lên lịch</option>
               <option value="completed">Đã hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>

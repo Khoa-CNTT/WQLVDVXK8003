@@ -4,6 +4,7 @@ import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
 import { useApi } from '../../../../hooks/useApi';
 import { fetchSortedData } from '../../../../utils/fetchSortedData';
+import { toast } from 'react-toastify';
 
 const Lines = () => {
   const api = useApi();
@@ -33,6 +34,8 @@ const Lines = () => {
         setLoading(true);
         const linesData = await fetchSortedData(api, '/admin/lines');
         const vehiclesData = await fetchSortedData(api, '/admin/vehicles');
+        console.log('linesData',linesData)
+        console.log('vehiclesData',vehiclesData)
         setLines(linesData);
         setVehicles(vehiclesData);
       } catch (err) {
@@ -80,10 +83,10 @@ const Lines = () => {
 
       if (editingLine) {
         await api.put(`/admin/lines/${editingLine.id}`, payload);
-        alert('Cập nhật tuyến thành công');
+        toast.success('Cập nhật tuyến thành công');
       } else {
         await api.post('/admin/lines', payload);
-        alert('Tạo tuyến thành công');
+        toast.success('Tạo tuyến thành công');
       }
 
       setShowModal(false);
@@ -191,7 +194,6 @@ const Lines = () => {
             base_price: parseFloat(line.base_price),
             actions: (
               <div className="action-buttons">
-                <button className="add-btn" onClick={() => alert(`Xem lịch sử đặt vé cho tuyến ID ${line.id}`)}>Lịch sử đặt vé</button>
                 <button className="edit-btn" onClick={() => handleEditLine(line)}>Sửa</button>
                 <button className="delete-btn" onClick={() => handleDeleteLine(line.id)}>Xóa</button>
               </div>

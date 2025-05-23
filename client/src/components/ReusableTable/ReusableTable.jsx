@@ -3,7 +3,7 @@ import './index.css';
 import LoadingTable from '../LoadingTable';
 
 const ReusableTable = ({ columns, data, loading, error, onEdit, onDelete }) => {
-  const rowsPerPage = 5;
+  const rowsPerPage = 6;
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalPages = Math.ceil(data.length / rowsPerPage);
