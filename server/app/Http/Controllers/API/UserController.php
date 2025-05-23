@@ -37,21 +37,22 @@ class UserController extends Controller
     }
 
     /**
-     * Cập nhật thông tin người dùng hiện tại
+     * Cập nhật thông tin người dùng (chuẩn RESTful cho apiResource)
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request)
+    public function update(Request $request, User $user)
     {
-        $user = $request->user();
-
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'current_password' => 'nullable|string',
+            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
+            'role_id' => 'required|exists:roles,id',
+            'status' => 'required|in:active,inactive,banned',
+            'address' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -62,23 +63,14 @@ class UserController extends Controller
             ], 422);
         }
 
-        // Nếu có mật khẩu hiện tại, kiểm tra xác thực
-        if ($request->has('current_password') && $request->current_password) {
-            if (!Hash::check($request->current_password, $user->password)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Mật khẩu hiện tại không chính xác'
-                ], 400);
-            }
-        }
-
-        // Cập nhật thông tin
         $user->name = $request->name;
-        $user->phone = $request->phone;
         $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->role_id = $request->role_id;
+        $user->status = $request->status;
+        $user->address = $request->address;
 
-        // Nếu có mật khẩu mới
-        if ($request->has('password') && $request->password) {
+        if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
@@ -86,8 +78,8 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Cập nhật thông tin thành công',
-            'data' => $user
+            'message' => 'Cập nhật người dùng thành công',
+            'data' => $user->refresh()
         ]);
     }
 
@@ -139,6 +131,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,id',
             'status' => 'required|in:active,inactive,banned',
+            'address' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -156,6 +149,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role_id' => $request->role_id,
             'status' => $request->status,
+            'address' => $request->address,
         ]);
 
         return response()->json([
@@ -177,54 +171,6 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $user
-        ]);
-    }
-
-    /**
-     * Cập nhật thông tin người dùng (chỉ dành cho admin)
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function updateLate(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
-            'phone' => 'required|string|max:20|unique:users,phone,' . $id,
-            'password' => 'nullable|string|min:8|confirmed',
-            'role_id' => 'required|exists:roles,id',
-            'status' => 'required|in:active,inactive,banned',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi xác thực dữ liệu',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->phone = $request->phone;
-        $user->role_id = $request->role_id;
-        $user->status = $request->status;
-
-        // Nếu có mật khẩu mới
-        if ($request->has('password') && $request->password) {
-            $user->password = Hash::make($request->password);
-        }
-
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cập nhật người dùng thành công',
             'data' => $user
         ]);
     }

@@ -80,7 +80,7 @@ class UserController extends Controller
     }
 
     /**
-     * Cập nhật thông tin người dùng
+     * Cập nhật thông tin người dùng (chuẩn RESTful cho apiResource)
      */
     public function update(Request $request, User $user)
     {
@@ -100,7 +100,7 @@ class UserController extends Controller
                 Rule::unique('users')->ignore($user->id),
             ],
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|in:admin,staff,customer',
+            'role_id' => 'required|exists:roles,id',
             'address' => 'nullable|string',
             'status' => 'required|in:active,inactive,banned',
         ]);
@@ -113,25 +113,23 @@ class UserController extends Controller
             ], 422);
         }
 
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'role' => $request->role,
-            'address' => $request->address,
-            'status' => $request->status,
-        ];
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->role_id = $request->role_id;
+        $user->address = $request->address;
+        $user->status = $request->status;
 
         if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+            $user->password = Hash::make($request->password);
         }
 
-        $user->update($data);
+        $user->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật thông tin thành công',
-            'data' => $user
+            'data' => $user->refresh()
         ]);
     }
 
