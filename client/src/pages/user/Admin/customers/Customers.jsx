@@ -4,36 +4,48 @@ import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
 import { useApi } from '../../../../hooks/useApi';
 import { fetchSortedData } from '../../../../utils/fetchSortedData';
+import { toast } from 'react-toastify';
+import { confirmAction } from '../../../../utils';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import customerSchema from './customerSchema';
 
 const Customers = () => {
   const api = useApi();
-
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
-  const [formUser, setFormUser] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    password_confirmation: '',
-    role_id: 2,   // default customer
-    address: '',
-    status: 'active',
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(customerSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      password_confirmation: '',
+      role_id: 2,
+      address: '',
+      status: 'active',
+      isEditing: false,
+    },
   });
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const UsersData = await fetchSortedData(api, '/admin/users');
-        setUsers(UsersData);
+        const data = await fetchSortedData(api, '/admin/users');
+        setUsers(data);
       } catch (err) {
-        setError(err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -41,72 +53,70 @@ const Customers = () => {
     fetchUsers();
   }, []);
 
-  const handleSaveUser = async () => {
+  const onSubmit = async (data) => {
+    console.log('Submit data:', data);
     try {
       const payload = {
-        name: formUser.name,
-        email: formUser.email,
-        phone: formUser.phone,
-        role_id: formUser.role_id,  // gửi role_id số
-        address: formUser.address,
-        status: formUser.status,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role_id: data.role_id,
+        status: data.status,
+        address: data.address,
       };
 
-      if (!editingUser || formUser.password) {
-        payload.password = formUser.password;
-        payload.password_confirmation = formUser.password_confirmation;
+      if (!editingUser || data.password) {
+        payload.password = data.password;
+        payload.password_confirmation = data.password_confirmation;
       }
 
-      console.log('Payload gửi lên:', payload);
-
       if (editingUser) {
+        console.log('update')
         await api.put(`/admin/users/${editingUser.id}`, payload);
-        alert('Cập nhật người dùng thành công');
+        toast.success('Cập nhật người dùng thành công!');
       } else {
         await api.post('/admin/users', payload);
-        alert('Tạo người dùng thành công');
+        toast.success('Tạo người dùng thành công!');
       }
 
       setShowModal(false);
       setEditingUser(null);
-      resetForm();
-      // Reload data
-      const newData = await fetchSortedData(api, '/admin/users');
-      setUsers(newData);
+      reset({ ...payload, password: '', password_confirmation: '', isEditing: false });
 
+      const updatedUsers = await fetchSortedData(api, '/admin/users');
+      setUsers(updatedUsers);
     } catch (error) {
-      console.error('Lỗi khi lưu user:', error);
-      alert('Lỗi khi lưu người dùng');
-    }
-  };
-
-  const handleDeleteUser = async (id) => {
-    if (window.confirm(`Bạn có chắc muốn xóa user ID ${id}?`)) {
-      try {
-        await api.delete(`/admin/users/${id}`);
-        alert('Xóa user thành công');
-        // Reload data
-        const newData = await fetchSortedData(api, '/admin/users');
-        setUsers(newData);
-      } catch (error) {
-        alert('Lỗi khi xóa user');
-      }
+      console.error(error);
+      toast.error('Lỗi khi lưu người dùng');
     }
   };
 
   const handleEditUser = (user) => {
     setEditingUser(user);
-    setFormUser({
-      name: user.name || '',
-      email: user.email || '',
-      phone: user.phone || '',
-      role_id: user.role_id || 2,
-      status: user.status || 'active',
-      address: user.address || '',
+    reset({
+      ...user,
       password: '',
       password_confirmation: '',
+      isEditing: true,
     });
     setShowModal(true);
+  };
+
+  const handleDeleteUser = (id) => {
+    confirmAction({
+      title: 'Xác nhận xóa người dùng',
+      text: `Bạn có chắc muốn xóa user ID ${id}?`,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/users/${id}`);
+          toast.success('Xóa user thành công');
+          const updatedUsers = await fetchSortedData(api, '/admin/users');
+          setUsers(updatedUsers);
+        } catch (error) {
+          toast.error('Lỗi khi xóa user');
+        }
+      },
+    });
   };
 
   const statusMap = {
@@ -145,19 +155,6 @@ const Customers = () => {
     },
   ];
 
-  const resetForm = () => {
-    setFormUser({
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      password_confirmation: '',
-      role_id: 2,
-      address: '',
-      status: 'active',
-    });
-  };
-
   return (
     <HomeAdminLayout>
       <div className="ticket-container">
@@ -166,7 +163,18 @@ const Customers = () => {
           <button
             className="add-btn"
             onClick={() => {
-              resetForm();
+              reset({
+                name: '',
+                email: '',
+                phone: '',
+                password: '',
+                password_confirmation: '',
+                role_id: 2,
+                address: '',
+                status: 'active',
+                isEditing: false,
+              });
+              setEditingUser(null);
               setShowModal(true);
             }}
           >
@@ -177,7 +185,6 @@ const Customers = () => {
           columns={columns}
           data={users.map((user) => ({
             ...user,
-            'role.name': user.role?.name,
             actions: (
               <div className="action-buttons">
                 <button className="edit-btn" onClick={() => handleEditUser(user)}>Sửa</button>
@@ -195,72 +202,52 @@ const Customers = () => {
             setShowModal(false);
             setEditingUser(null);
           }}
-          onSubmit={handleSaveUser}
+          onSubmit={handleSubmit(onSubmit)}
         >
-          <div className="form-group">
+          <div className="">
             <label>Họ tên:</label>
-            <input
-              type="text"
-              value={formUser.name}
-              onChange={(e) => setFormUser({ ...formUser, name: e.target.value })}
-              placeholder="VD: Nguyễn Văn A"
-            />
+            <input {...register('name')} placeholder="VD: Nguyễn Văn A" />
+            {errors.name && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.name.message}</p>}
           </div>
-          <div className="form-group">
+          <div className="">
             <label>Email:</label>
-            <input
-              type="email"
-              value={formUser.email}
-              onChange={(e) => setFormUser({ ...formUser, email: e.target.value })}
-              placeholder="VD: user@email.com"
-            />
+            <input {...register('email')} placeholder="VD: user@email.com" />
+            {errors.email && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.email.message}</p>}
           </div>
-          <div className="form-group">
+          <div className="">
             <label>Số điện thoại:</label>
-            <input
-              type="text"
-              value={formUser.phone}
-              onChange={(e) => setFormUser({ ...formUser, phone: e.target.value })}
-              placeholder="VD: 0905123456"
-            />
+            <input {...register('phone')} placeholder="VD: 0905123456" />
+            {errors.phone && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.phone.message}</p>}
           </div>
           <div className="form-group">
             <label>Vai trò:</label>
-            <select
-              value={formUser.role_id}
-              onChange={(e) => setFormUser({ ...formUser, role_id: parseInt(e.target.value) })}
-            >
+            <select {...register('role_id')}>
               <option value={1}>Admin</option>
               <option value={2}>Customer</option>
             </select>
+            {errors.role_id && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.role_id.message}</p>}
           </div>
           <div className="form-group">
             <label>Trạng thái:</label>
-            <select
-              value={formUser.status}
-              onChange={(e) => setFormUser({ ...formUser, status: e.target.value })}
-            >
+            <select {...register('status')}>
               <option value="active">Hoạt động</option>
               <option value="banned">Bị khóa</option>
             </select>
+            {errors.status && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.status.message}</p>}
           </div>
           {!editingUser && (
             <>
-              <div className="form-group">
+              <div className="">
                 <label>Mật khẩu:</label>
-                <input
-                  type="password"
-                  value={formUser.password}
-                  onChange={(e) => setFormUser({ ...formUser, password: e.target.value })}
-                />
+                <input type="password" {...register('password')} />
+                {errors.password && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.password.message}</p>}
               </div>
-              <div className="form-group">
+              <div className="">
                 <label>Xác nhận mật khẩu:</label>
-                <input
-                  type="password"
-                  value={formUser.password_confirmation}
-                  onChange={(e) => setFormUser({ ...formUser, password_confirmation: e.target.value })}
-                />
+                <input type="password" {...register('password_confirmation')} />
+                {errors.password_confirmation && (
+                  <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.password_confirmation.message}</p>
+                )}
               </div>
             </>
           )}
