@@ -18,7 +18,7 @@ const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
   password: '', // sửa nếu bạn có mật khẩu MySQL
-  database: 'phuongthanh_express'
+  database: 'phuongthanhexpress'
 });
 
 app.post("/chat", async (req, res) => {

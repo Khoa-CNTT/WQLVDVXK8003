@@ -53,6 +53,9 @@ const Ticket_Detail = () => {
   const busName = queryParams.get('busName');
   const busTime = queryParams.get('busTime');
   const busPrice = parseInt(queryParams.get('busPrice'));
+  const departure = queryParams.get('departure');
+  const destination = queryParams.get('destination');
+  const date = queryParams.get('date');
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -110,41 +113,18 @@ const Ticket_Detail = () => {
 
     const loadSeats = async () => {
       try {
-        // In a real application, you would fetch the seats from your API
-        // const response = await fetch(`your-api-url/trips/${tripId}/seats`);
-        // const data = await response.json();
-        // setTripSeats(data.seats);
-
-        // For now, we'll use sample data
-        setTripSeats(generateSampleSeats());
+        const response = await api.get(`/trips/${tripId}/seats`);
+        setTripSeats(response.data.data.seats);
         setLoading(false);
       } catch (error) {
         console.error("Error loading seat data:", error);
-        setTripSeats(generateSampleSeats());
+        setTripSeats([]);
         setLoading(false);
       }
     };
 
     loadSeats();
   }, [tripId, busName, busTime, busPrice, isAuthenticated, user]);
-
-  // Generate sample seats for testing
-  const generateSampleSeats = () => {
-    const sampleSeats = [];
-    const totalSeats = 20;
-    const takenSeats = [2, 5, 8, 12, 15]; // Sample taken seats
-
-    for (let i = 1; i <= totalSeats; i++) {
-      sampleSeats.push({
-        id: i,
-        seat_number: i,
-        status: takenSeats.includes(i) ? 'taken' : 'available',
-        booking_status: takenSeats.includes(i) ? 'booked' : 'available'
-      });
-    }
-
-    return sampleSeats;
-  };
 
   // Toggle seat selection
   const toggleSeat = (seatId) => {
@@ -197,34 +177,50 @@ const Ticket_Detail = () => {
         payment_method: paymentMethod
       };
 
-        // const response = await api.post('/bookings', bookingData);
-        console.log('bookingData',bookingData)
+      const response = await api.post('/bookings', bookingData);
+      const result = response.data.data;
 
+      // Nếu là thanh toán qua vnpay/momo → redirect
+      if (result.payment_url) {
+        window.location.href = result.payment_url;
+        return;
+      }
 
-      // if (!response.ok) {
-      //   throw new Error(  'Đặt vé thất bại!');
-      // }
-
-      // // Nếu là thanh toán qua vnpay/momo → redirect
-      // if (result.payment_url) {
-      //   window.location.href = result.payment_url;
-      //   return;
-      // }
-
-      // // Trường hợp thanh toán tiền mặt hoặc không có URL thanh toán
-      // setBookingCode(result.booking.booking_code);
-      // setShowSuccessModal(true);
+      // Trường hợp thanh toán tiền mặt hoặc không có URL thanh toán
+      setBookingCode(result.booking.booking_code);
+      setShowSuccessModal(true);
 
     } catch (error) {
       console.error("Lỗi đặt vé:", error);
-      setBookingResult({
-        message: `Đặt vé thất bại: ${error.message}`,
-        isError: true
-      });
+      if (error.response && error.response.data && error.response.data.errors) {
+        setBookingResult({
+          message: "Lỗi: " + JSON.stringify(error.response.data.errors),
+          isError: true
+        });
+      } else if (error.response && error.response.data && error.response.data.message) {
+        setBookingResult({
+          message: `Lỗi: ${error.response.data.message}`,
+          isError: true
+        });
+      } else {
+        setBookingResult({
+          message: `Đặt vé thất bại: ${error.message}`,
+          isError: true
+        });
+      }
     } finally {
       setSubmitting(false); // Enable form
     }
   };
+
+  // Tự động điền thông tin khách hàng khi đã đăng nhập
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setPassengerName(user.name || '');
+      setPassengerPhone(user.phone || '');
+      setPassengerEmail(user.email || '');
+    }
+  }, [isAuthenticated, user]);
 
   // If trip data is missing, show error
   if (!tripData) {
@@ -252,7 +248,7 @@ const Ticket_Detail = () => {
       <header>
         <div className="container">
           <h1>Phương Thanh Express</h1>
-          <Link to="/booking-resultslogin" className="back-link">Quay lại Tìm kiếm</Link>
+          <Link to={`/booking-resultslogin?departure=${departure}&destination=${destination}&date=${date}`} className="back-link">Quay lại Tìm kiếm</Link>
         </div>
       </header>
 
@@ -286,6 +282,7 @@ const Ticket_Detail = () => {
                     seat.status !== 'taken' && seat.booking_status !== 'booked' &&
                     toggleSeat(seat.id)
                   }
+                  style={{ pointerEvents: seat.status === 'taken' || seat.booking_status === 'booked' ? 'none' : 'auto' }}
                 >
                   {seat.seat_number}
                 </div>

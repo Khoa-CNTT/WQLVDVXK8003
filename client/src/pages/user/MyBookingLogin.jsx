@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './MyBookingLogin.css';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApi } from '../../hooks/useApi';
 
 const MyBooking = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const api = useApi();
   
   // Mặc định đặt isAuthenticated là false để hiển thị màn hình đăng nhập
   // Trong ứng dụng thực, bạn sẽ sử dụng useAuth() để lấy trạng thái đăng nhập
@@ -107,21 +109,12 @@ const MyBooking = () => {
   // Function to cancel booking
   const handleCancelBooking = async () => {
     if (!currentBookingId) return;
-    
     try {
-      // In a real application, you would call your API here
-      // await api.cancelBooking(currentBookingId);
-      
-      // For now, we'll simulate a successful cancellation
-      // Update the local state to reflect the cancellation
-      setBookings(prevBookings => 
-        prevBookings.map(booking => 
-          booking.id === currentBookingId 
-            ? { ...booking, status: 'cancelled' } 
-            : booking
-        )
-      );
-      
+      // Gọi API hủy vé trên backend
+      await api.delete(`/bookings/${currentBookingId}`);
+      // Reload lại danh sách vé từ backend
+      const response = await api.get('/bookings');
+      setBookings(response.data.data.data || response.data.data);
       showNotification("Hủy vé thành công", "success");
       setShowCancelModal(false);
       setCurrentBookingId(null);
@@ -131,98 +124,37 @@ const MyBooking = () => {
     }
   };
 
+  // Thêm hàm thanh toán VNPay
+  const handleVnpayPayment = async (bookingId) => {
+    try {
+      const res = await api.post('/payments/vnpay/create', { booking_id: bookingId });
+      const paymentUrl = res.data.data.payment_url;
+      window.location.href = paymentUrl;
+    } catch (err) {
+      showNotification('Có lỗi khi tạo thanh toán VNPay', 'error');
+    }
+  };
+
   // Load user bookings
   useEffect(() => {
-    // If user is not logged in, don't try to load bookings
     if (!isAuthenticated) {
       setLoading(false);
       return;
     }
-
     const loadBookings = async () => {
       setLoading(true);
       try {
-        // In a real application, you would fetch bookings from your API
-        // const response = await fetch('your-api-url/bookings', {
-        //   headers: {
-        //     'Authorization': `Bearer ${authToken}`
-        //   }
-        // });
-        // const data = await response.json();
-        // setBookings(data);
-        
-        // For now, we'll use sample data
-        setTimeout(() => {
-          setBookings(generateSampleBookings());
-          setLoading(false);
-        }, 1000); // Simulate loading delay
+        const response = await api.get('/bookings');
+        setBookings(response.data.data.data || response.data.data); // support for both paginated and non-paginated
       } catch (error) {
         console.error("Error loading bookings:", error);
-        setBookings(generateSampleBookings());
+        setBookings([]);
+      } finally {
         setLoading(false);
       }
     };
-
     loadBookings();
   }, [isAuthenticated]);
-
-  // Generate sample bookings for testing
-  const generateSampleBookings = () => {
-    const statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
-    const paymentStatuses = ['paid', 'pending'];
-    const paymentMethods = ['cash', 'vnpay', 'momo'];
-    const routes = [
-      { departure: 'Đà Nẵng', destination: 'Quảng Bình' },
-      { departure: 'Đà Nẵng', destination: 'Nghệ An' },
-      { departure: 'Đà Nẵng', destination: 'Hà Giang' }
-    ];
-    
-    const sampleBookings = [];
-    
-    // Generate 5 sample bookings
-    for (let i = 0; i < 5; i++) {
-      const route = routes[Math.floor(Math.random() * routes.length)];
-      const bookingDate = new Date();
-      bookingDate.setDate(bookingDate.getDate() - Math.floor(Math.random() * 30));
-      
-      const departureTime = new Date(bookingDate);
-      departureTime.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
-      
-      const seatCount = Math.floor(Math.random() * 3) + 1;
-      const selectedSeats = [];
-      for (let j = 0; j < seatCount; j++) {
-        selectedSeats.push(Math.floor(Math.random() * 40) + 1);
-      }
-      
-      sampleBookings.push({
-        id: 'booking-' + (i + 1),
-        booking_code: 'PTX' + Math.floor(Math.random() * 1000000),
-        created_at: bookingDate.toISOString(),
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        payment_status: paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)],
-        payment_method: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
-        trip: {
-          route: route,
-          departure_time: departureTime.toISOString(),
-          vehicle: {
-            type: Math.random() > 0.5 ? 'Limousine' : 'Giường nằm cao cấp'
-          }
-        },
-        seat_count: seatCount,
-        selectedSeats: selectedSeats,
-        total_price: seatCount * 300000,
-        passenger_name: 'Nguyễn Văn A',
-        passenger_phone: '0123456789'
-      });
-    }
-    
-    return sampleBookings;
-  };
-
-  // Chỉ để demo - Trong ứng dụng thực, xóa dòng này
-  const handleFakeLogin = () => {
-    setIsAuthenticated(true);
-  };
 
   return (
     <div className="my-bookinglogin">
@@ -348,6 +280,15 @@ const MyBooking = () => {
                           className="cancel-btn"
                         >
                           Hủy vé
+                        </button>
+                      )}
+                      {/* Nút thanh toán VNPay */}
+                      {booking.payment_status !== 'paid' && booking.status !== 'cancelled' && (
+                        <button 
+                          onClick={() => handleVnpayPayment(booking.id)} 
+                          className="pay-btn"
+                        >
+                          Thanh toán VNPay
                         </button>
                       )}
                     </div>

@@ -43,9 +43,9 @@ class TripSeeder extends Seeder
             return;
         }
 
-        // Tạo chuyến xe cho 30 ngày tới
+        // Tạo chuyến xe cho 7 ngày tới
         $startDate = Carbon::now();
-        $endDate = Carbon::now()->addDays(30);
+        $endDate = Carbon::now()->addDays(7);
 
         $currentDate = $startDate->copy();
         $tripCount = 0;
@@ -61,7 +61,7 @@ class TripSeeder extends Seeder
 
                 // Tạo các khung giờ khởi hành
                 $departureTimes = [
-                    '06:00', '10:00', '14:00', '20:00'
+                    '05:00', '07:00', '09:00', '11:00', '13:00', '15:00', '17:00'
                 ];
 
                 foreach ($departureTimes as $timeIndex => $departureTime) {

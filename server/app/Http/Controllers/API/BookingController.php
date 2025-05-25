@@ -22,7 +22,7 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        $bookings = Booking::with(['trip.route', 'tickets.seat'])
+        $bookings = Booking::with(['trip.line', 'tickets.seat'])
             ->where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -41,7 +41,7 @@ class BookingController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = Booking::with(['user', 'trip.route', 'tickets.seat']);
+        $query = Booking::with(['user', 'trip.line', 'tickets.seat']);
 
         // Lọc theo trạng thái nếu có
         if ($request->has('status')) {
@@ -139,7 +139,20 @@ class BookingController extends Controller
             DB::commit();
 
             // Load relationships
-            $booking->load(['trip.route', 'tickets.seat']);
+            $booking->load(['trip.line', 'tickets.seat']);
+
+            // Nếu chọn VNPay thì trả về payment_url
+            if ($request->payment_method === 'vnpay') {
+                $paymentRes = app(\App\Http\Controllers\API\PaymentController::class)->createVnpayPayment(new Request(['booking_id' => $booking->id]));
+                $paymentData = $paymentRes->getData()->data ?? null;
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'payment_url' => $paymentData->payment_url ?? null,
+                        'booking' => $booking
+                    ]
+                ], 201);
+            }
 
             return response()->json([
                 'success' => true,
@@ -166,7 +179,7 @@ class BookingController extends Controller
      */
     public function show($id)
     {
-        $booking = Booking::with(['trip.route', 'tickets.seat'])
+        $booking = Booking::with(['trip.line', 'tickets.seat'])
             ->where('id', $id)
             ->where('user_id', request()->user()->id)
             ->firstOrFail();
