@@ -6,40 +6,41 @@ import { useApi } from '../../../../hooks/useApi';
 import { fetchSortedData } from '../../../../utils/fetchSortedData';
 import { toast } from 'react-toastify';
 
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as Yup from 'yup';
+import LineSchema from './LineSchema';
+
+
 const Lines = () => {
   const api = useApi();
 
   const [lines, setLines] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
   const [showModal, setShowModal] = useState(false);
   const [editingLine, setEditingLine] = useState(null);
 
-  const [formLine, setFormLine] = useState({
-    departure: '',
-    destination: '',
-    distance: '',
-    duration: '',
-    base_price: '',
-    description: '',
-    status: 'active',
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(LineSchema),
   });
 
-  // Load lines and vehicles
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const linesData = await fetchSortedData(api, '/admin/lines');
         const vehiclesData = await fetchSortedData(api, '/admin/vehicles');
-        console.log('linesData',linesData)
-        console.log('vehiclesData',vehiclesData)
         setLines(linesData);
         setVehicles(vehiclesData);
       } catch (err) {
-        setError(err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -47,38 +48,26 @@ const Lines = () => {
     fetchData();
   }, []);
 
-  // Hàm tính tổng số ghế của line dựa vào trips và vehicles
   const calculateTotalSeats = (trips) => {
     if (!trips || trips.length === 0) return 0;
-    let totalSeats = 0;
-    trips.forEach(trip => {
+    return trips.reduce((sum, trip) => {
       const vehicle = vehicles.find(v => v.id === trip.vehicle_id);
-      if (vehicle) {
-        totalSeats += vehicle.capacity;
-      }
-    });
-    return totalSeats;
+      return sum + (vehicle?.capacity || 0);
+    }, 0);
   };
 
-  // Lấy ngày đi đầu tiên trong trips của line
   const getFirstDepartureDate = (trips) => {
     if (!trips || trips.length === 0) return '-';
-    // Lấy ngày departure_time nhỏ nhất
-    const sortedTrips = trips.slice().sort((a, b) => new Date(a.departure_time) - new Date(b.departure_time));
-    const firstDate = new Date(sortedTrips[0].departure_time);
-    return firstDate.toLocaleDateString('vi-VN');
+    const sorted = trips.slice().sort((a, b) => new Date(a.departure_time) - new Date(b.departure_time));
+    return new Date(sorted[0].departure_time).toLocaleDateString('vi-VN');
   };
 
-  const handleSaveLine = async () => {
+  const onSubmit = async (data) => {
     try {
       const payload = {
-        departure: formLine.departure,
-        destination: formLine.destination,
-        distance: parseFloat(formLine.distance),
-        duration: formLine.duration,
-        base_price: parseFloat(formLine.base_price),
-        description: formLine.description,
-        status: formLine.status,
+        ...data,
+        distance: parseFloat(data.distance),
+        base_price: parseFloat(data.base_price),
       };
 
       if (editingLine) {
@@ -91,12 +80,10 @@ const Lines = () => {
 
       setShowModal(false);
       setEditingLine(null);
-      resetForm();
+      reset();
 
-      // Reload data
-      const linesData = await fetchSortedData(api, '/admin/lines');
-      setLines(linesData);
-
+      const updatedLines = await fetchSortedData(api, '/admin/lines');
+      setLines(updatedLines);
     } catch (error) {
       console.error('Lỗi khi lưu tuyến:', error);
       alert('Lỗi khi lưu tuyến');
@@ -108,8 +95,8 @@ const Lines = () => {
       try {
         await api.delete(`/admin/lines/${id}`);
         alert('Xóa tuyến thành công');
-        const linesData = await fetchSortedData(api, '/admin/lines');
-        setLines(linesData);
+        const updatedLines = await fetchSortedData(api, '/admin/lines');
+        setLines(updatedLines);
       } catch (error) {
         alert('Lỗi khi xóa tuyến');
       }
@@ -118,28 +105,14 @@ const Lines = () => {
 
   const handleEditLine = (line) => {
     setEditingLine(line);
-    setFormLine({
-      departure: line.departure || '',
-      destination: line.destination || '',
-      distance: line.distance || '',
-      duration: line.duration || '',
-      base_price: line.base_price || '',
-      description: line.description || '',
-      status: line.status || 'active',
-    });
+    setValue('departure', line.departure || '');
+    setValue('destination', line.destination || '');
+    setValue('distance', line.distance || '');
+    setValue('duration', line.duration || '');
+    setValue('base_price', line.base_price || '');
+    setValue('description', line.description || '');
+    setValue('status', line.status || 'active');
     setShowModal(true);
-  };
-
-  const resetForm = () => {
-    setFormLine({
-      departure: '',
-      destination: '',
-      distance: '',
-      duration: '',
-      base_price: '',
-      description: '',
-      status: 'active',
-    });
   };
 
   const columns = [
@@ -147,22 +120,26 @@ const Lines = () => {
     {
       label: 'Tuyến đường',
       key: 'route',
-      render: (_, line) => (
-        <span>{line.departure} - {line.destination}</span>
-      ),
+      render: (_, line) => <span>{line.departure} - {line.destination}</span>,
     },
     {
-      label: 'Số ghế',
-      key: 'total_seats',
+      label: 'Khoảng cách',
+      key: 'distance',
+      render: (value) => value ? `${parseFloat(value).toFixed(0)} km` : '-',
     },
     {
-      label: 'Ngày đi',
-      key: 'departure_date',
+      label: 'Thời gian di chuyển',
+      key: 'duration',
+      render: (value) => {
+        const hours = Math.floor(value / 60);
+        const minutes = value % 60;
+        return `${hours}h ${minutes}m`; // hoặc chọn format khác như gợi ý
+      },
     },
     {
       label: 'Đơn giá',
       key: 'base_price',
-      render: (value) => value ? value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : '-',
+      render: (value) => value ? `${value.toLocaleString('vi-VN')} VNĐ` : '-',
     },
     {
       label: 'Hành động',
@@ -178,13 +155,15 @@ const Lines = () => {
           <button
             className="add-btn"
             onClick={() => {
-              resetForm();
+              reset();
+              setEditingLine(null);
               setShowModal(true);
             }}
           >
             Thêm Tuyến
           </button>
         </div>
+
         <ReusableTable
           columns={columns}
           data={lines.map(line => ({
@@ -208,71 +187,47 @@ const Lines = () => {
           onClose={() => {
             setShowModal(false);
             setEditingLine(null);
+            reset();
           }}
-          onSubmit={handleSaveLine}
+          onSubmit={handleSubmit(onSubmit)}
         >
-          <div className="form-group">
+          <div className="">
             <label>Nơi xuất phát:</label>
-            <input
-              type="text"
-              value={formLine.departure}
-              onChange={(e) => setFormLine({ ...formLine, departure: e.target.value })}
-              placeholder="VD: Đà Nẵng"
-            />
+            <input type="text" {...register('departure')} placeholder="VD: Đà Nẵng" />
+            {errors.departure && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.departure.message}</p>}
           </div>
-          <div className="form-group">
+          <div className="">
             <label>Nơi đến:</label>
-            <input
-              type="text"
-              value={formLine.destination}
-              onChange={(e) => setFormLine({ ...formLine, destination: e.target.value })}
-              placeholder="VD: Quảng Bình"
-            />
+            <input type="text" {...register('destination')} placeholder="VD: Quảng Bình" />
+            {errors.destination && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.destination.message}</p>}
           </div>
-          <div className="form-group">
+          <div className="">
             <label>Khoảng cách (km):</label>
-            <input
-              type="number"
-              value={formLine.distance}
-              onChange={(e) => setFormLine({ ...formLine, distance: e.target.value })}
-              placeholder="VD: 300"
-            />
+            <input type="number" {...register('distance')} placeholder="VD: 300" />
+            {errors.distance && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.distance.message}</p>}
           </div>
-          <div className="form-group">
+          <div className="">
             <label>Thời gian (phút):</label>
-            <input
-              type="text"
-              value={formLine.duration}
-              onChange={(e) => setFormLine({ ...formLine, duration: e.target.value })}
-              placeholder="VD: 240"
-            />
+            <input type="text" {...register('duration')} placeholder="VD: 240" />
+            {errors.duration && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.duration.message}</p>}
           </div>
-          <div className="form-group">
+          <div className="">
             <label>Đơn giá (VND):</label>
-            <input
-              type="number"
-              value={formLine.base_price}
-              onChange={(e) => setFormLine({ ...formLine, base_price: e.target.value })}
-              placeholder="VD: 300000"
-            />
+            <input type="number" {...register('base_price')} placeholder="VD: 300000" />
+            {errors.base_price && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.base_price.message}</p>}
           </div>
-          <div className="form-group">
+          <div className="">
             <label>Mô tả:</label>
-            <textarea
-              value={formLine.description}
-              onChange={(e) => setFormLine({ ...formLine, description: e.target.value })}
-              placeholder="Mô tả tuyến đường"
-            />
+            <textarea {...register('description')} className='w-full min-h-[80px] p-2 border border-gray-300 rounded-md' placeholder="Mô tả tuyến đường" />
+            {errors.description && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.description.message}</p>}
           </div>
           <div className="form-group">
             <label>Trạng thái:</label>
-            <select
-              value={formLine.status}
-              onChange={(e) => setFormLine({ ...formLine, status: e.target.value })}
-            >
+            <select {...register('status')}>
               <option value="active">Hoạt động</option>
               <option value="inactive">Không hoạt động</option>
             </select>
+            {errors.status && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.status.message}</p>}
           </div>
         </ReusableModal>
       </div>
