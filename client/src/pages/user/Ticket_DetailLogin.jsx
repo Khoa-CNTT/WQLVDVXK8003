@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './Ticket_DetailLogin.css';
+import { useApi } from '../../hooks/useApi';
+import { formatTime } from '../../utils';
 
 const Ticket_Detail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  
+
+  const { id } = useParams();
+  const [tripData, setTripData] = useState([]);
+  const [seatData, setSeatData] = useState([])
+  const api = useApi()
+
+  useEffect(() => {
+    // Gọi API để lấy thông tin chuyến đi theo id
+    const fetchTrip = async () => {
+      try {
+        const response = await api.get(`/trips/${id}/seats`);
+        const newData = response.data.data
+        console.log('responsetrips', newData)
+        setTripData(newData.trip);
+        setSeatData(newData.seats)
+      } catch (error) {
+        console.error('Lỗi khi gọi API:', error);
+      }
+    };
+
+    fetchTrip();
+  }, [id]);
+
+
+
   // State variables
   const [loading, setLoading] = useState(true);
   const [tripSeats, setTripSeats] = useState([]);
@@ -43,11 +69,11 @@ const Ticket_Detail = () => {
     notification.className = `notification ${type}`;
     notification.textContent = message;
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
       notification.classList.add("show");
     }, 10);
-    
+
     setTimeout(() => {
       notification.classList.remove("show");
       setTimeout(() => {
@@ -88,7 +114,7 @@ const Ticket_Detail = () => {
         // const response = await fetch(`your-api-url/trips/${tripId}/seats`);
         // const data = await response.json();
         // setTripSeats(data.seats);
-        
+
         // For now, we'll use sample data
         setTripSeats(generateSampleSeats());
         setLoading(false);
@@ -107,7 +133,7 @@ const Ticket_Detail = () => {
     const sampleSeats = [];
     const totalSeats = 20;
     const takenSeats = [2, 5, 8, 12, 15]; // Sample taken seats
-    
+
     for (let i = 1; i <= totalSeats; i++) {
       sampleSeats.push({
         id: i,
@@ -116,7 +142,7 @@ const Ticket_Detail = () => {
         booking_status: takenSeats.includes(i) ? 'booked' : 'available'
       });
     }
-    
+
     return sampleSeats;
   };
 
@@ -132,12 +158,12 @@ const Ticket_Detail = () => {
   };
 
   // Calculate total price
-  const totalPrice = selectedSeats.length * busPrice;
+  const totalPrice = selectedSeats.length * tripData?.price;
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!isAuthenticated) {
       showNotification("Vui lòng đăng nhập để đặt vé!", "error");
       return;
@@ -159,64 +185,36 @@ const Ticket_Detail = () => {
       return;
     }
 
-    // Disable form submission while processing
-    setSubmitting(true);
+    setSubmitting(true); // Disable form
 
     try {
-      // Prepare booking data
       const bookingData = {
-        trip_id: tripId,
+        trip_id: tripData.id,
         seat_ids: selectedSeats,
         passenger_name: passengerName,
         passenger_phone: passengerPhone,
         passenger_email: passengerEmail,
         payment_method: paymentMethod
       };
-      
-      // In a real application, you would send this data to your API
-      // const response = await fetch('your-api-url/bookings', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${authToken}`
-      //   },
-      //   body: JSON.stringify(bookingData)
-      // });
-      // const data = await response.json();
-      
-      // Simulate API response
-      const mockResponse = {
-        success: true,
-        booking: {
-          id: Math.floor(Math.random() * 1000) + 1,
-          booking_code: `PT${Math.floor(Math.random() * 10000)}`
-        }
-      };
-      
-      // If payment method is vnpay or momo, redirect to payment page
-      if (paymentMethod === "vnpay") {
-        // Simulate API payment response
-        const paymentResponse = {
-          payment_url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-        };
-        if (paymentResponse.payment_url) {
-          window.location.href = paymentResponse.payment_url;
-          return;
-        }
-      } else if (paymentMethod === "momo") {
-        // Simulate API payment response
-        const paymentResponse = {
-          payment_url: "https://test-payment.momo.vn/gw_payment/transactionProcessor"
-        };
-        if (paymentResponse.payment_url) {
-          window.location.href = paymentResponse.payment_url;
-          return;
-        }
-      }
-      
-      // For cash payment or if payment redirect failed
-      setBookingCode(mockResponse.booking.booking_code);
-      setShowSuccessModal(true);
+
+        // const response = await api.post('/bookings', bookingData);
+        console.log('bookingData',bookingData)
+
+
+      // if (!response.ok) {
+      //   throw new Error(  'Đặt vé thất bại!');
+      // }
+
+      // // Nếu là thanh toán qua vnpay/momo → redirect
+      // if (result.payment_url) {
+      //   window.location.href = result.payment_url;
+      //   return;
+      // }
+
+      // // Trường hợp thanh toán tiền mặt hoặc không có URL thanh toán
+      // setBookingCode(result.booking.booking_code);
+      // setShowSuccessModal(true);
+
     } catch (error) {
       console.error("Lỗi đặt vé:", error);
       setBookingResult({
@@ -224,18 +222,18 @@ const Ticket_Detail = () => {
         isError: true
       });
     } finally {
-      setSubmitting(false);
+      setSubmitting(false); // Enable form
     }
   };
 
   // If trip data is missing, show error
-  if (!tripId || !busName || !busTime || !busPrice) {
+  if (!tripData) {
     return (
       <div className="ticket-detaillogin">
         <header>
           <div className="container">
             <h1>Phương Thanh Express</h1>
-            <Link to="/booking-results" className="back-link">Quay lại Tìm kiếm</Link>
+            <p to="/booking-results" className="back-link">Quay lại Tìm kiếm</p>
           </div>
         </header>
 
@@ -260,7 +258,7 @@ const Ticket_Detail = () => {
 
       <section className="container">
         <h2>CHI TIẾT ĐẶT VÉ</h2>
-        
+
         {loading ? (
           <div className="loading">
             <p>Đang tải thông tin chuyến xe...</p>
@@ -268,24 +266,24 @@ const Ticket_Detail = () => {
         ) : (
           <div className="booking-content">
             <h3>Thông tin chuyến xe</h3>
-            <p className="bus-info">Chuyến xe: {busName} | Giờ khởi hành: {busTime} | Giá vé: {formatCurrency(busPrice)}</p>
+            <p className="bus-info">Chuyến xe: {tripData?.vehicle?.name} | Giờ khởi hành: {formatTime(tripData?.departure_time)}</p>
+            <p> Giá vé: {formatCurrency(tripData.price)}</p>
             <p className="total-price">Tổng tiền: {formatCurrency(totalPrice)}</p>
 
             {/* Sơ đồ chọn ghế */}
             <h3>Chọn ghế ngồi</h3>
             <div className="seat-map">
-              {tripSeats.map((seat) => (
-                <div 
+              {seatData.map((seat) => (
+                <div
                   key={seat.id}
-                  className={`seat ${
-                    seat.status === 'taken' || seat.booking_status === 'booked' 
-                      ? 'taken' 
-                      : selectedSeats.includes(seat.id) 
-                        ? 'selected' 
-                        : 'available'
-                  }`}
-                  onClick={() => 
-                    seat.status !== 'taken' && seat.booking_status !== 'booked' && 
+                  className={`seat ${seat.status === 'taken' || seat.booking_status === 'booked'
+                    ? 'taken'
+                    : selectedSeats.includes(seat.id)
+                      ? 'selected'
+                      : 'available'
+                    }`}
+                  onClick={() =>
+                    seat.status !== 'taken' && seat.booking_status !== 'booked' &&
                     toggleSeat(seat.id)
                   }
                 >
@@ -301,40 +299,40 @@ const Ticket_Detail = () => {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="passengerName">Họ và tên:</label>
-                <input 
-                  type="text" 
-                  id="passengerName" 
+                <input
+                  type="text"
+                  id="passengerName"
                   value={passengerName}
                   onChange={(e) => setPassengerName(e.target.value)}
-                  required 
+                  required
                   placeholder="Nhập họ và tên"
                 />
               </div>
               <div className="form-group">
                 <label htmlFor="passengerPhone">Số điện thoại:</label>
-                <input 
-                  type="tel" 
-                  id="passengerPhone" 
+                <input
+                  type="tel"
+                  id="passengerPhone"
                   value={passengerPhone}
                   onChange={(e) => setPassengerPhone(e.target.value)}
-                  required 
+                  required
                   placeholder="Nhập số điện thoại"
                 />
               </div>
               <div className="form-group">
                 <label htmlFor="passengerEmail">Email:</label>
-                <input 
-                  type="email" 
-                  id="passengerEmail" 
+                <input
+                  type="email"
+                  id="passengerEmail"
                   value={passengerEmail}
                   onChange={(e) => setPassengerEmail(e.target.value)}
-                  required 
+                  required
                   placeholder="Nhập email"
                 />
               </div>
               <div className="form-group">
                 <label htmlFor="paymentMethod">Phương thức thanh toán:</label>
-                <select 
+                <select
                   id="paymentMethod"
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
@@ -344,24 +342,24 @@ const Ticket_Detail = () => {
                   <option value="momo">MOMO</option>
                 </select>
               </div>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className={`btn-modern ${submitting ? 'disabled' : ''}`}
                 disabled={submitting}
               >
                 {submitting ? 'Đang xử lý...' : 'Xác nhận đặt vé'}
               </button>
             </form>
-            
+
             {!isAuthenticated && (
               <div className="login-reminder">
-              <p>
-                Bạn cần <Link to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}>đăng nhập</Link> để đặt vé. 
-                Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
-              </p>
-            </div>
-          )}
-            
+                <p>
+                  Bạn cần <Link to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}>đăng nhập</Link> để đặt vé.
+                  Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+                </p>
+              </div>
+            )}
+
             {bookingResult.message && (
               <div className={`booking-resultslogin ${bookingResult.isError ? 'error' : 'success'}`}>
                 {bookingResult.message}

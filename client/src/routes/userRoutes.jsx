@@ -41,7 +41,7 @@ const userRoutes = [
     ),
   },
   {
-    path: '/ticket-detaillogin',
+    path: '/ticket-detaillogin/:id',
     element: (
       <ProtectedRoute >
         <Ticket_DetailLogin />

@@ -51,6 +51,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('user', [UserController::class, 'profile']);
     Route::put('user', [UserController::class, 'update']);
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::apiResource('trips', TripController::class);
 
     // Đặt vé
     Route::get('trips/{trip_id}/seats', [SeatController::class, 'getTripSeats']);

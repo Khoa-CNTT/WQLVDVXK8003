@@ -1,12 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './BookingResultsLogin.css';
+import { useApi } from '../../hooks/useApi';
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
 
 const BookingResults = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  
+
+  const query = useQuery();
+  const lineId = query.get('line_id'); // Lấy line_id từ url
+  const api = useApi();
+  const [lineDetails, setLineDetails] = useState(null);
+  const [trips, setTrips] = useState([])
+
+  useEffect(() => {
+    if (lineId) {
+      const fetchLineDetails = async () => {
+        try {
+          const response = await api.get(`/lines/${lineId}`);
+          console.log('respont',response.data)
+          setLineDetails(response.data);
+          setTrips(response.data.trips)
+        } catch (error) {
+          console.error('Lỗi khi lấy chi tiết tuyến:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchLineDetails();
+    }
+  }, [lineId]);
+
+  const goToDetail = (tripId) => {
+    navigate(`/ticket-detaillogin/${tripId}?line_id=${lineId}`);
+  };
+
   // Get search parameters
   const departure = queryParams.get('departure');
   const destination = queryParams.get('destination');
@@ -21,7 +55,7 @@ const BookingResults = () => {
   const [seatFilter, setSeatFilter] = useState('all');
   const [timeFilter, setTimeFilter] = useState('all');
   const [sortOption, setSortOption] = useState('default');
-  
+
   const itemsPerPage = 6;
 
   useEffect(() => {
@@ -37,26 +71,26 @@ const BookingResults = () => {
         // Replace with your actual API call
         // const response = await api.searchTrips(departure, destination, date);
         // const data = response.trips;
-        
+
         // For now using sample data
         const data = generateSampleData(departure, destination, date);
-        
+
         // Default sorting by departure time
-        const sortedData = [...data].sort((a, b) => 
+        const sortedData = [...data].sort((a, b) =>
           new Date(a.departure_time) - new Date(b.departure_time)
         );
-        
+
         setTripData(data);
         setFilteredData(sortedData);
       } catch (error) {
         console.error("Error fetching trips:", error);
-        
+
         // Use sample data when API fails
         const sampleData = generateSampleData(departure, destination, date);
-        const sortedData = [...sampleData].sort((a, b) => 
+        const sortedData = [...sampleData].sort((a, b) =>
           new Date(a.departure_time) - new Date(b.departure_time)
         );
-        
+
         setTripData(sampleData);
         setFilteredData(sortedData);
       } finally {
@@ -121,16 +155,19 @@ const BookingResults = () => {
     setCurrentPage(1);
   };
 
-  // Book ticket function
-  const bookTicket = (tripId, busName, busTime, busPrice) => {
-    navigate(`/ticket-detaillogin?tripId=${encodeURIComponent(tripId)}&busName=${encodeURIComponent(busName)}&busTime=${encodeURIComponent(busTime)}&busPrice=${encodeURIComponent(busPrice)}`);
-  };
-
   // Format time function
-  const formatTime = (dateTime) => {
-    const date = new Date(dateTime);
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-  };
+ const formatDateTime = (isoString) => {
+  const date = new Date(isoString);
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Tháng bắt đầu từ 0
+  const year = date.getFullYear();
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
 
   // Format currency function
   const formatCurrency = (amount) => {
@@ -145,13 +182,13 @@ const BookingResults = () => {
   const generateSampleData = (departure, destination, date) => {
     const dateObj = new Date(date);
     const sampleData = [];
-    
+
     // Generate 10 sample trips
     for (let i = 0; i < 10; i++) {
       const hour = 6 + (i * 2) % 24; // Trips every 2 hours starting from 6 AM
       const tripTime = new Date(dateObj);
       tripTime.setHours(hour, i % 2 === 0 ? 0 : 30, 0);
-      
+
       sampleData.push({
         id: `trip-${i + 1}`,
         route: {
@@ -167,7 +204,7 @@ const BookingResults = () => {
         total_seats: 40
       });
     }
-    
+
     return sampleData;
   };
 
@@ -201,12 +238,12 @@ const BookingResults = () => {
           <Link to="/home" className="back-link">Quay lại Trang Chủ</Link>
         </div>
       </header>
-      
+
       {/* Main Content */}
       <section className="container">
         <h2>KẾT QUẢ TÌM KIẾM</h2>
-        
-        {!departure || !destination || !date ? (
+
+        {!lineDetails ? (
           <div className="search-info">
             <p>Không có dữ liệu chuyến xe. Vui lòng quay lại trang chủ.</p>
             <Link to="/home" className="btn-modern">Quay lại trang chủ</Link>
@@ -214,12 +251,12 @@ const BookingResults = () => {
         ) : (
           <>
             <p className="search-info">
-              Tuyến đường: {departure} → {destination} | Ngày: {date}
+              Tuyến đường: {lineDetails.departure} → {lineDetails.destination}
             </p>
 
             {/* Filters and Sorting */}
             <div className="filters-container">
-              <select 
+              <select
                 value={priceFilter}
                 onChange={(e) => setPriceFilter(e.target.value)}
                 className="filter-select"
@@ -228,8 +265,8 @@ const BookingResults = () => {
                 <option value="below300">Dưới 300.000 VND</option>
                 <option value="above300">Trên 300.000 VND</option>
               </select>
-              
-              <select 
+
+              <select
                 value={seatFilter}
                 onChange={(e) => setSeatFilter(e.target.value)}
                 className="filter-select"
@@ -238,8 +275,8 @@ const BookingResults = () => {
                 <option value="available">Còn chỗ</option>
                 <option value="full">Hết chỗ</option>
               </select>
-              
-              <select 
+
+              <select
                 value={timeFilter}
                 onChange={(e) => setTimeFilter(e.target.value)}
                 className="filter-select"
@@ -249,8 +286,8 @@ const BookingResults = () => {
                 <option value="afternoon">Chiều (12:00 - 17:59)</option>
                 <option value="evening">Tối (18:00 - 23:59)</option>
               </select>
-              
-              <select 
+
+              <select
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value)}
                 className="filter-select"
@@ -261,8 +298,8 @@ const BookingResults = () => {
                 <option value="time-asc">Giờ sớm nhất</option>
                 <option value="seats-desc">Ghế còn nhiều nhất</option>
               </select>
-              
-              <button 
+
+              <button
                 className="btn-modern"
                 onClick={applyFiltersAndSort}
               >
@@ -278,7 +315,7 @@ const BookingResults = () => {
             ) : (
               <>
                 {/* Results */}
-                {filteredData.length === 0 ? (
+                {trips.length === 0 ? (
                   <div className="no-results">
                     <p>Không tìm thấy chuyến xe phù hợp. Vui lòng thử lại với tuyến khác hoặc ngày khác.</p>
                     <Link to="/home" className="btn-modern">Quay lại trang chủ</Link>
@@ -286,51 +323,51 @@ const BookingResults = () => {
                 ) : (
                   <>
                     <div className="results-grid">
-                      {getCurrentPageItems().map((trip) => {
-                        const formattedTime = formatTime(trip.departure_time);
-                        
+                      {trips.map((trip) => {
+                        const formattedTime = formatDateTime(trip.departure_time);
                         // Determine status message and class
-                        let statusMessage = "";
-                        let statusClass = "";
-                        
-                        if (trip.available_seats === 0) {
-                          statusMessage = "Hết chỗ";
-                          statusClass = "status-full";
-                        } else if (trip.available_seats <= 5) {
-                          statusMessage = `Còn ${trip.available_seats} chỗ trống`;
-                          statusClass = "status-limited";
-                        } else {
-                          statusMessage = `Còn ${trip.available_seats} chỗ trống`;
-                          statusClass = "status-available";
-                        }
-                        
+                        // let statusMessage = "";
+                        // let statusClass = "";
+
+                        // if (trip.available_seats === 0) {
+                        //   statusMessage = "Hết chỗ";
+                        //   statusClass = "status-full";
+                        // } else if (trip.available_seats <= 5) {
+                        //   statusMessage = `Còn ${trip.available_seats} chỗ trống`;
+                        //   statusClass = "status-limited";
+                        // } else {
+                        //   statusMessage = `Còn ${trip.available_seats} chỗ trống`;
+                        //   statusClass = "status-available";
+                        // }
+
                         return (
                           <div className="bus-card" key={trip.id}>
-                            <h3>{trip.vehicle ? trip.vehicle.type : 'Xe Limousine'} - {trip.route ? trip.route.departure + ' → ' + trip.route.destination : departure + ' → ' + destination}</h3>
+                            <h3>{trip.vehicle ? trip.vehicle.type : 'Xe Limousine'} - {lineDetails ? lineDetails.departure + ' → ' + lineDetails.destination : departure + ' → ' + destination}</h3>
                             <p>⏰ Giờ khởi hành: <strong>{formattedTime}</strong></p>
                             <p>💰 Giá vé: <strong>{formatCurrency(trip.price)}</strong></p>
-                            <p>🪑 <span className={`status-badge ${statusClass}`}>{statusMessage}</span></p>
+                            <p>🪑 <span className={`status-badge `}></span></p>
                             <p className="amenities">✅ WiFi miễn phí, nước uống, điều hòa</p>
-                            <button 
+                            {/* <button
                               className={`btn-modern ${trip.available_seats === 0 ? 'disabled' : ''}`}
                               disabled={trip.available_seats === 0}
                               onClick={() => trip.available_seats > 0 && bookTicket(
-                                trip.id, 
-                                trip.vehicle ? trip.vehicle.type : 'Xe Limousine', 
-                                formattedTime, 
+                                trip.id,
+                                trip.vehicle ? trip.vehicle.type : 'Xe Limousine',
+                                formattedTime,
                                 trip.price
                               )}
                             >
                               {trip.available_seats === 0 ? 'Hết vé' : 'Đặt vé ngay'}
-                            </button>
+                            </button> */}
+                            <button className='btn-modern' onClick={() => goToDetail(trip.id)}>Đặt vé ngay</button>
                           </div>
                         );
                       })}
                     </div>
-                    
+
                     {/* Pagination */}
                     <div className="pagination">
-                      <button 
+                      <button
                         className={`btn-modern ${currentPage === 1 ? 'disabled' : ''}`}
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
@@ -340,7 +377,7 @@ const BookingResults = () => {
                       <span className="page-info">
                         Trang {currentPage} / {Math.ceil(filteredData.length / itemsPerPage)}
                       </span>
-                      <button 
+                      <button
                         className={`btn-modern ${currentPage === Math.ceil(filteredData.length / itemsPerPage) ? 'disabled' : ''}`}
                         onClick={goToNextPage}
                         disabled={currentPage === Math.ceil(filteredData.length / itemsPerPage)}
