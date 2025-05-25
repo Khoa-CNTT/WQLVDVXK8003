@@ -4,6 +4,12 @@ import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
 import { useApi } from '../../../../hooks/useApi';
 import { fetchSortedData } from '../../../../utils/fetchSortedData';
+import { toast } from 'react-toastify';
+import { confirmAction } from '../../../../utils';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { driverSchema } from './driverSchema';
+
 
 const Drivers = () => {
   const api = useApi();
@@ -15,14 +21,13 @@ const Drivers = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingDriver, setEditingDriver] = useState(null);
 
-  const [formDriver, setFormDriver] = useState({
-    name: '',
-    phone: '',
-    birth_date: '',
-    experience_years: '',
-    license_number: '',
-    license_expiry: '',
-    status: 'active',
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(driverSchema),
   });
 
   const statusMap = {
@@ -35,7 +40,6 @@ const Drivers = () => {
       try {
         setLoading(true);
         const data = await fetchSortedData(api, '/admin/drivers');
-        console.log('drivesData', data)
         setDrivers(data);
       } catch (err) {
         setError(err);
@@ -47,7 +51,7 @@ const Drivers = () => {
   }, []);
 
   const resetForm = () => {
-    setFormDriver({
+    reset({
       name: '',
       phone: '',
       birth_date: '',
@@ -60,53 +64,54 @@ const Drivers = () => {
 
   const handleEditDriver = (driver) => {
     setEditingDriver(driver);
-    setFormDriver({
+    reset({
       name: driver.name || '',
       phone: driver.phone || '',
-      birth_date: driver.birth_date ? driver.birth_date.slice(0, 10) : '',
+      birth_date: driver.birth_date?.slice(0, 10) || '',
       experience_years: driver.experience_years || '',
       license_number: driver.license_number || '',
-      license_expiry: driver.license_expiry ? driver.license_expiry.slice(0, 10) : '',
+      license_expiry: driver.license_expiry?.slice(0, 10) || '',
       status: driver.status || 'active',
     });
     setShowModal(true);
   };
 
-  const handleSaveDriver = async () => {
+  const handleSaveDriver = async (data) => {
     try {
-      const payload = { ...formDriver };
-      console.log('payload trước khi gửi', payload)
-
       if (editingDriver) {
-        await api.put(`/admin/drivers/${editingDriver.id}`, payload);
-        alert('Cập nhật tài xế thành công');
+        await api.put(`/admin/drivers/${editingDriver.id}`, data);
+        toast.success('Cập nhật tài xế thành công');
       } else {
-        await api.post(`/admin/drivers`, payload);
-        alert('Tạo tài xế thành công');
+        await api.post(`/admin/drivers`, data);
+        toast.success('Tạo tài xế thành công');
       }
 
       setShowModal(false);
       setEditingDriver(null);
       resetForm();
-      const data = await fetchSortedData(api, '/admin/drivers');
-      setDrivers(data);
+      const dataFetched = await fetchSortedData(api, '/admin/drivers');
+      setDrivers(dataFetched);
     } catch (error) {
       console.error('Lỗi khi lưu tài xế:', error);
-      alert('Có lỗi xảy ra khi lưu tài xế.');
+      toast.error('Có lỗi xảy ra khi lưu tài xế.');
     }
   };
 
-  const handleDeleteDriver = async (id) => {
-    if (window.confirm(`Bạn có chắc muốn xóa tài xế ID ${id}?`)) {
-      try {
-        await api.delete(`/admin/drivers/${id}`);
-        alert('Đã xóa tài xế.');
-        const data = await fetchSortedData(api, '/admin/drivers');
-        setDrivers(data);
-      } catch (error) {
-        alert('Lỗi khi xóa tài xế.');
-      }
-    }
+  const handleDeleteDriver = (id) => {
+    confirmAction({
+      title: 'Xác nhận xóa tài xế',
+      text: `Bạn có chắc muốn xóa tài xế ID ${id}?`,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/drivers/${id}`);
+          toast.success('Xóa tài xế thành công');
+          const newData = await fetchSortedData(api, '/admin/drivers');
+          setDrivers(newData);
+        } catch (error) {
+          toast.error('Lỗi khi xóa tài xế');
+        }
+      },
+    });
   };
 
   const columns = [
@@ -114,10 +119,15 @@ const Drivers = () => {
     { label: 'Họ tên', key: 'name' },
     { label: 'Số điện thoại', key: 'phone' },
     {
-      label: 'Ngày sinh', key: 'birth_date',
-      render: (value) => new Date(value).toLocaleDateString('vi-VN')
+      label: 'Ngày sinh',
+      key: 'birth_date',
+      render: (value) => new Date(value).toLocaleDateString('vi-VN'),
     },
-    { label: 'Kinh nghiệm (năm)', key: 'experience_years' },
+    {
+      label: 'Kinh nghiệm',
+      key: 'experience_years',
+      render: (value) => (value != null ? `${value} năm` : '-'),
+    },
     {
       label: 'Trạng thái',
       key: 'status',
@@ -168,70 +178,51 @@ const Drivers = () => {
             setShowModal(false);
             setEditingDriver(null);
           }}
-          onSubmit={handleSaveDriver}
+          onSubmit={handleSubmit(handleSaveDriver)}
         >
-          <div className="form-group">
+          <div className="">
             <label>Họ tên:</label>
-            <input
-              type="text"
-              value={formDriver.name}
-              onChange={(e) => setFormDriver({ ...formDriver, name: e.target.value })}
-              placeholder="VD: Trần Văn Tài"
-            />
+            <input type="text" {...register('name')} placeholder="VD: Trần Văn Tài" />
+            {errors.name && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.name.message}</p>}
           </div>
-          <div className="form-group">
+
+          <div className="">
             <label>Số điện thoại:</label>
-            <input
-              type="text"
-              value={formDriver.phone}
-              onChange={(e) => setFormDriver({ ...formDriver, phone: e.target.value })}
-              placeholder="VD: 0905123456"
-            />
+            <input type="text" {...register('phone')} placeholder="VD: 0905123456" />
+            {errors.phone && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.phone.message}</p>}
           </div>
+
           <div className="form-group">
             <label>Ngày sinh:</label>
-            <input
-              type="date"
-              value={formDriver.birth_date}
-              onChange={(e) => setFormDriver({ ...formDriver, birth_date: e.target.value })}
-            />
+            <input type="date" {...register('birth_date')} />
+            {errors.birth_date && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.birth_date.message}</p>}
           </div>
-          <div className="form-group">
+
+          <div className="">
             <label>Kinh nghiệm (năm):</label>
-            <input
-              type="number"
-              value={formDriver.experience_years}
-              onChange={(e) => setFormDriver({ ...formDriver, experience_years: e.target.value })}
-              placeholder="VD: 5"
-            />
+            <input type="number" {...register('experience_years')} placeholder="VD: 5" />
+            {errors.experience_years && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.experience_years.message}</p>}
           </div>
-          <div className="form-group">
+
+          <div className="">
             <label>Số giấy phép lái xe:</label>
-            <input
-              type="text"
-              value={formDriver.license_number}
-              onChange={(e) => setFormDriver({ ...formDriver, license_number: e.target.value })}
-              placeholder="VD: B2-123456"
-            />
+            <input type="text" {...register('license_number')} placeholder="VD: B2-123456" />
+            {errors.license_number && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.license_number.message}</p>}
           </div>
 
           <div className="form-group">
             <label>Ngày hết hạn GPLX:</label>
-            <input
-              type="date"
-              value={formDriver.license_expiry}
-              onChange={(e) => setFormDriver({ ...formDriver, license_expiry: e.target.value })}
-            />
+            <input type="date" {...register('license_expiry')} />
+            {errors.license_expiry && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.license_expiry.message}</p>}
           </div>
+
           <div className="form-group">
             <label>Trạng thái:</label>
-            <select
-              value={formDriver.status}
-              onChange={(e) => setFormDriver({ ...formDriver, status: e.target.value })}
-            >
+            <select {...register('status')}>
               <option value="active">Hoạt động</option>
               <option value="inactive">Không hoạt động</option>
             </select>
+            {errors.status && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.status.message}</p>}
           </div>
         </ReusableModal>
       </div>

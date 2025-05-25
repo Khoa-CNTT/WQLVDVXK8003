@@ -7,6 +7,12 @@ import { fetchSortedData } from '../../../../utils/fetchSortedData';
 import { toast } from 'react-toastify';
 import { confirmAction } from '../../../../utils/confirm';
 
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import vehicleSchema from './VehicleSchema';
+
+
+
 const Vehicles = () => {
   const api = useApi();
   const [vehicles, setVehicles] = useState([]);
@@ -16,15 +22,14 @@ const Vehicles = () => {
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const [newVehicle, setNewVehicle] = useState({
-    name: '',
-    license_plate: '',
-    type: '',
-    model: '',
-    capacity: '',
-    manufacture_year: '',
-    status: '',
-    amenities: '',
+  // Thay thế formData + handleChange bằng react-hook-form + yup
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(vehicleSchema),
   });
 
   useEffect(() => {
@@ -44,10 +49,12 @@ const Vehicles = () => {
           lastMaintenance: vehicle.last_maintenance,
           createdAt: vehicle.created_at,
           updatedAt: vehicle.updated_at,
+          amenities: vehicle.amenities || '',
+          model: vehicle.model || '',
         }));
         setVehicles(mappedVehicles);
+        setError(null);
       } catch (err) {
-        console.error('Lỗi khi tải dữ liệu phương tiện:', err);
         setError(err);
       } finally {
         setLoading(false);
@@ -56,6 +63,8 @@ const Vehicles = () => {
 
     fetchVehicles();
   }, [refreshKey]);
+
+  // Giữ nguyên các api create/update/delete
 
   const createVehicleAPI = async (vehicle) => {
     const payload = {
@@ -89,9 +98,8 @@ const Vehicles = () => {
       const response = await api.put(`/admin/vehicles/${vehicleId}`, payload);
       return response.data;
     } catch (error) {
-      const message = error.response?.data?.message || 'Lỗi khi cập nhật phương tiện';
-      toast.error(message);
-      throw new Error(message);
+      toast.error(error.response?.data?.message || 'Lỗi khi cập nhật phương tiện');
+      throw error;
     }
   };
 
@@ -107,7 +115,7 @@ const Vehicles = () => {
         deleteVehicleAPI(id)
           .then(() => {
             toast.success("Đã xoá thành công");
-            setRefreshKey(prev => prev + 1); 
+            setRefreshKey(prev => prev + 1);
           })
           .catch(() => {
             toast.error("Xoá thất bại");
@@ -116,37 +124,28 @@ const Vehicles = () => {
     });
   };
 
-  const handleSaveVehicle = async () => {
+  // Thay thế hàm submit để dùng handleSubmit react-hook-form
+  const onSubmit = async (data) => {
     try {
       if (editingVehicle) {
-        await updateVehicleAPI(editingVehicle.id, newVehicle);
+        await updateVehicleAPI(editingVehicle.id, data);
         toast.success('Cập nhật phương tiện thành công!');
       } else {
-        await createVehicleAPI(newVehicle);
+        await createVehicleAPI(data);
         toast.success('Thêm phương tiện thành công!');
       }
-
       setShowModal(false);
       setEditingVehicle(null);
-      setNewVehicle({
-        name: '',
-        license_plate: '',
-        type: '',
-        model: '',
-        capacity: '',
-        manufacture_year: '',
-        status: '',
-        amenities: '',
-      });
+      reset();
       setRefreshKey(prev => prev + 1);
     } catch (error) {
-      toast.error('Lỗi khi lưu phương tiện:', error);
+      toast.error(error.message || 'Lỗi khi lưu phương tiện');
     }
   };
 
-  const handleEdit = (vehicle) => {
+  const openModalForEdit = (vehicle) => {
     setEditingVehicle(vehicle);
-    setNewVehicle({
+    reset({
       name: vehicle.name || '',
       license_plate: vehicle.licensePlate || '',
       type: vehicle.type || '',
@@ -159,10 +158,24 @@ const Vehicles = () => {
     setShowModal(true);
   };
 
+  const openModalForAdd = () => {
+    setEditingVehicle(null);
+    reset({
+      name: '',
+      license_plate: '',
+      type: '',
+      model: '',
+      capacity: '',
+      manufacture_year: '',
+      status: '',
+      amenities: '',
+    });
+    setShowModal(true);
+  };
+
   const statusMap = {
     active: { className: 'text-green-600 font-bold', label: 'Hoạt động' },
     inactive: { className: 'text-red-600 font-bold', label: 'Không hoạt động' },
-    maintenance: { className: 'text-yellow-500 font-bold', label: 'Bảo trì' },
   };
 
   const columns = [
@@ -190,144 +203,119 @@ const Vehicles = () => {
         <div className="action-bar">
           <button
             className="add-btn"
-            onClick={() => {
-              setEditingVehicle(null);
-              setNewVehicle({
-                name: '',
-                license_plate: '',
-                type: '',
-                model: '',
-                capacity: '',
-                manufacture_year: '',
-                status: '',
-                amenities: '',
-              });
-              setShowModal(true);
-            }}
+            onClick={openModalForAdd}
           >
             Thêm Phương Tiện
           </button>
         </div>
 
+        {error && <p className="error-message">Lỗi: {error.message || 'Không thể tải dữ liệu'}</p>}
+
         <ReusableTable
           columns={columns}
-          data={vehicles.map((vehicle) => ({
+          data={vehicles.map(vehicle => ({
             ...vehicle,
             actions: (
               <div className="action-buttons">
-                <button className="edit-btn" onClick={() => handleEdit(vehicle)}>Sửa</button>
-                <button className="delete-btn" onClick={() => handleDelete(vehicle.id)}>Xóa</button>
+                <button
+                  className="edit-btn"
+                  onClick={() => openModalForEdit(vehicle)}
+                >
+                  Sửa
+                </button>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDelete(vehicle.id)}
+                >
+                  Xóa
+                </button>
               </div>
-            ),
+            )
           }))}
           loading={loading}
         />
 
+        {/* Sửa modal form để dùng react-hook-form */}
         <ReusableModal
           title={editingVehicle ? 'Sửa Phương Tiện' : 'Thêm Phương Tiện Mới'}
           show={showModal}
           onClose={() => {
             setShowModal(false);
             setEditingVehicle(null);
-            setNewVehicle({
-              name: '',
-              license_plate: '',
-              type: '',
-              model: '',
-              capacity: '',
-              manufacture_year: '',
-              status: '',
-              amenities: '',
-            });
+            reset();
           }}
-          onSubmit={handleSaveVehicle}
+          onSubmit={handleSubmit(onSubmit)} // dùng handleSubmit từ react-hook-form
         >
-          {/* Form input fields */}
-          <div className="form-group">
+          <div className="">
             <label>Tên xe:</label>
             <input
               type="text"
               placeholder="Nhập tên xe"
-              value={newVehicle.name}
-              onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
+              {...register('name')}
             />
+            <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.name?.message}</p>
           </div>
 
-          <div className="form-group">
+          <div className="">
             <label>Biển số xe:</label>
             <input
               type="text"
               placeholder="VD: 43A-12345"
-              value={newVehicle.license_plate}
-              onChange={(e) => setNewVehicle({ ...newVehicle, license_plate: e.target.value })}
+              {...register('license_plate')}
             />
+            <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.license_plate?.message}</p>
           </div>
 
           <div className="form-group">
             <label>Loại xe:</label>
-            <select
-              value={newVehicle.type}
-              onChange={(e) => setNewVehicle({ ...newVehicle, type: e.target.value })}
-            >
+            <select {...register('type')}>
               <option value="">-- Chọn loại xe --</option>
               <option value="sleeper">Sleeper</option>
               <option value="seater">Seater</option>
               <option value="limousine">Limousine</option>
               <option value="vip">VIP</option>
             </select>
+            <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.type?.message}</p>
           </div>
 
-          <div className="form-group">
-            <label>Model:</label>
-            <input
-              type="text"
-              placeholder="VD: MEC E300"
-              value={newVehicle.model}
-              onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
-            />
-          </div>
-
-          <div className="form-group">
+          <div className="">
             <label>Số ghế:</label>
             <input
               type="number"
               placeholder="VD: 45"
-              value={newVehicle.capacity}
-              onChange={(e) => setNewVehicle({ ...newVehicle, capacity: e.target.value })}
+              {...register('capacity')}
             />
+            <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.capacity?.message}</p>
           </div>
 
-          <div className="form-group">
+          <div className="">
             <label>Năm sản xuất:</label>
             <input
               type="number"
               placeholder="VD: 2020"
-              value={newVehicle.manufacture_year}
-              onChange={(e) => setNewVehicle({ ...newVehicle, manufacture_year: e.target.value })}
+              {...register('manufacture_year')}
             />
+            <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.manufacture_year?.message}</p>
           </div>
 
           <div className="form-group">
             <label>Trạng thái:</label>
-            <select
-              value={newVehicle.status}
-              onChange={(e) => setNewVehicle({ ...newVehicle, status: e.target.value })}
-            >
+            <select {...register('status')}>
               <option value="">-- Chọn trạng thái --</option>
               <option value="active">Hoạt động</option>
               <option value="inactive">Không hoạt động</option>
-              <option value="maintenance">Bảo trì</option>
             </select>
+            <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.status?.message}</p>
           </div>
 
-          <div className="form-group">
-            <label>Tiện nghi:</label>
+          <div className="">
+            <label>Mô tả tiện nghi (amenities):</label>
             <input
               type="text"
-              placeholder="VD: Wifi, Máy lạnh, TV"
-              value={newVehicle.amenities}
-              onChange={(e) => setNewVehicle({ ...newVehicle, amenities: e.target.value })}
+              placeholder="VD: Wifi, điều hòa..."
+              {...register('amenities')}
             />
+            <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.amenities?.message}</p>
           </div>
         </ReusableModal>
       </div>
