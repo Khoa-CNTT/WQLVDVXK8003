@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 
 const menuItems = [
   { path: '/admin/', label: 'Thống kê' },
@@ -35,7 +35,9 @@ const Sidebar = () => {
   return (
     <aside className="sidebar w-64 bg-white shadow h-screen p-4">
       <div className="company-name mb-6">
-        <h1 className="text-2xl font-bold text-orange-500">Phương Thanh Express</h1>
+          <Link to="/admin" className="text-2xl font-bold text-orange-500">
+          Phương Thanh Express
+        </Link>
       </div>
       <nav className="menu flex flex-col gap-2">
         {menuItems.map((item) => (
