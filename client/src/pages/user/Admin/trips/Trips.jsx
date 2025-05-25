@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
 import HomeAdminLayout from '../../../../layouts/AdminLayout';
 import ReusableTable from '../../../../components/ReusableTable/ReusableTable';
 import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import { useApi } from '../../../../hooks/useApi';
 import { fetchSortedData } from '../../../../utils/fetchSortedData';
+import { toast } from 'react-toastify';
+import { confirmAction } from '../../../../utils';
+import tripSchema from './tripSchema';
 
 const Trips = () => {
   const api = useApi();
@@ -14,18 +19,16 @@ const Trips = () => {
   const [lines, setLines] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
-
   const [showModal, setShowModal] = useState(false);
   const [editingTrip, setEditingTrip] = useState(null);
 
-  const [formTrip, setFormTrip] = useState({
-    line_id: '',
-    vehicle_id: '',
-    driver_id: '',
-    departure_time: '',
-    arrival_time: '',
-    price: '',
-    status: 'active',
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm({
+    resolver: yupResolver(tripSchema),
   });
 
   const statusMap = {
@@ -42,7 +45,6 @@ const Trips = () => {
     try {
       setLoading(true);
       const data = await fetchSortedData(api, '/admin/trips');
-      console.log('Tripdata', data)
       setTrips(data);
     } catch (err) {
       setError(err);
@@ -53,9 +55,7 @@ const Trips = () => {
 
   function formatDateTime(datetimeLocalStr) {
     if (!datetimeLocalStr) return '';
-    // datetimeLocalStr: "2025-05-23T15:30"
     return datetimeLocalStr.replace('T', ' ') + ':00';
-    // chuyển thành "2025-05-23 15:30:00"
   }
 
   useEffect(() => {
@@ -66,13 +66,11 @@ const Trips = () => {
           api.get('/admin/drivers'),
           api.get('/admin/vehicles'),
         ]);
-        const lineData = lineRes.data
-        const driverData = driverRes.data.data.data
-        const vehicleData = vehicleRes.data.data.data
-
-        setLines(lineData);
-        setDrivers(driverData);
-        setVehicles(vehicleData);
+        console.log('driverRes', driverRes)
+        console.log('vehicleRes', vehicleRes)
+        setLines(lineRes.data);
+        setDrivers(driverRes.data.data.data);
+        setVehicles(vehicleRes.data.data.data);
       } catch (err) {
         console.error('Lỗi tải danh sách:', err);
       }
@@ -82,21 +80,9 @@ const Trips = () => {
     loadTrips();
   }, []);
 
-  const resetForm = () => {
-    setFormTrip({
-      line_id: '',
-      vehicle_id: '',
-      driver_id: '',
-      departure_time: '',
-      arrival_time: '',
-      price: '',
-      status: 'active',
-    });
-  };
-
   const handleEditTrip = (trip) => {
     setEditingTrip(trip);
-    setFormTrip({
+    reset({
       line_id: trip.line_id,
       vehicle_id: trip.vehicle_id,
       driver_id: trip.driver_id,
@@ -108,46 +94,45 @@ const Trips = () => {
     setShowModal(true);
   };
 
-  const handleDeleteTrip = async (id) => {
-    if (window.confirm(`Bạn có chắc muốn xóa chuyến xe ID ${id}?`)) {
-      try {
-        await api.delete(`/admin/trips/${id}`);
-        alert('Xóa chuyến xe thành công');
-        loadTrips();
-      } catch (err) {
-        alert('Lỗi khi xóa chuyến xe');
-      }
-    }
+  const handleDeleteTrip = (id) => {
+    confirmAction({
+      title: 'Xác nhận chuyến xe',
+      text: `Bạn có chắc muốn xóa chuyến xe ID ${id}?`,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/trips/${id}`);
+          toast.success('Xóa chuyến xe thành công');
+          const newData = await fetchSortedData(api, '/admin/trips');
+          setTrips(newData);
+        } catch (error) {
+          toast.error('Lỗi khi xóa chuyến xe');
+        }
+      },
+    });
   };
 
-  const handleSaveTrip = async () => {
+  const onSubmit = async (data) => {
     try {
       const payload = {
-        line_id: formTrip.line_id,
-        vehicle_id: formTrip.vehicle_id,
-        driver_id: formTrip.driver_id,
-        departure_time: formatDateTime(formTrip.departure_time),
-        arrival_time: formatDateTime(formTrip.arrival_time),
-        price: formTrip.price,
-        status: formTrip.status,
+        ...data,
+        departure_time: formatDateTime(data.departure_time),
+        arrival_time: formatDateTime(data.arrival_time),
       };
-
-      console.log('payload trước khi gửi', payload);
 
       if (editingTrip) {
         await api.put(`/admin/trips/${editingTrip.id}`, payload);
-        alert('Cập nhật chuyến xe thành công');
+        toast.success('Cập nhật chuyến xe thành công');
       } else {
         await api.post('/admin/trips', payload);
-        alert('Tạo chuyến xe thành công');
+        toast.success('Tạo chuyến xe thành công');
       }
 
       setShowModal(false);
       setEditingTrip(null);
-      resetForm();
+      reset();
       loadTrips();
     } catch (err) {
-      alert('Lỗi khi lưu chuyến xe');
+      toast.error('Lỗi khi lưu chuyến xe');
     }
   };
 
@@ -164,11 +149,9 @@ const Trips = () => {
         const now = new Date();
         const arrival = new Date(row.arrival_time);
         let displayStatus = row.status;
-
         if (row.status === 'active' && arrival < now) {
           displayStatus = 'completed';
         }
-
         const s = statusMap[displayStatus] || { className: '', label: displayStatus };
         return <span className={s.className}>{s.label}</span>;
       }
@@ -189,21 +172,16 @@ const Trips = () => {
       <div className="ticket-container">
         <h1 className="page-title">Danh Sách Chuyến Xe</h1>
         <div className="action-bar">
-          <button
-            className="add-btn"
-            onClick={() => {
-              resetForm();
-              setShowModal(true);
-            }}
-          >
+          <button className="add-btn" onClick={() => {
+            reset();
+            setEditingTrip(null);
+            setShowModal(true);
+          }}>
             Thêm Chuyến Xe
           </button>
         </div>
-        <ReusableTable
-          columns={columns}
-          data={trips}
-          loading={loading}
-        />
+
+        <ReusableTable columns={columns} data={trips} loading={loading} />
 
         <ReusableModal
           title={editingTrip ? 'Sửa Chuyến Xe' : 'Thêm Chuyến Xe'}
@@ -212,14 +190,11 @@ const Trips = () => {
             setShowModal(false);
             setEditingTrip(null);
           }}
-          onSubmit={handleSaveTrip}
+          onSubmit={handleSubmit(onSubmit)}
         >
           <div className="form-group">
             <label>Tuyến đường:</label>
-            <select
-              value={formTrip.line_id}
-              onChange={(e) => setFormTrip({ ...formTrip, line_id: e.target.value })}
-            >
+            <select {...register('line_id')}>
               <option value="">-- Chọn tuyến đường --</option>
               {lines.map((line) => (
                 <option key={line.id} value={line.id}>
@@ -227,56 +202,69 @@ const Trips = () => {
                 </option>
               ))}
             </select>
+            {errors.line_id && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.line_id.message}</p>}
           </div>
 
           <div className="form-group">
             <label>Phương tiện:</label>
-            <select
-              value={formTrip.vehicle_id}
-              onChange={(e) => setFormTrip({ ...formTrip, vehicle_id: e.target.value })}
-            >
+            <select {...register('vehicle_id')}>
               <option value="">-- Chọn phương tiện --</option>
-              {vehicles.map((vehicle) => (
-                <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.name} ({vehicle.license_plate})
-                </option>
-              ))}
+              {vehicles
+                .filter(vehicle => vehicle.status !== 'inactive')
+                .map((vehicle) => (
+                  <option key={vehicle.id} value={vehicle.id}>
+                    {vehicle.name} ({vehicle.license_plate})
+                  </option>
+                ))}
             </select>
+            {errors.vehicle_id && (
+              <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.vehicle_id.message}</p>
+            )}
           </div>
 
           <div className="form-group">
             <label>Tài xế:</label>
-            <select
-              value={formTrip.driver_id}
-              onChange={(e) => setFormTrip({ ...formTrip, driver_id: e.target.value })}
-            >
+            <select {...register('driver_id')}>
               <option value="">-- Chọn tài xế --</option>
-              {drivers.map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {driver.name} - {driver.phone}
-                </option>
-              ))}
+              {drivers
+                .filter(driver => driver.status !== 'inactive')
+                .map((driver) => (
+                  <option key={driver.id} value={driver.id}>
+                    {driver.name} - {driver.phone}
+                  </option>
+                ))}
             </select>
+            {errors.driver_id && (
+              <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.driver_id.message}</p>
+            )}
           </div>
+
           <div className="form-group">
             <label>Ngày & giờ khởi hành:</label>
-            <input type="datetime-local" value={formTrip.departure_time} onChange={e => setFormTrip({ ...formTrip, departure_time: e.target.value })} />
+            <input type="datetime-local" {...register('departure_time')} />
+            {errors.departure_time && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.departure_time.message}</p>}
           </div>
+
           <div className="form-group">
             <label>Giờ đến dự kiến:</label>
-            <input type="datetime-local" value={formTrip.arrival_time} onChange={e => setFormTrip({ ...formTrip, arrival_time: e.target.value })} />
+            <input type="datetime-local" {...register('arrival_time')} />
+            {errors.arrival_time && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.arrival_time.message}</p>}
           </div>
-          <div className="form-group">
+
+          <div className="">
             <label>Giá vé:</label>
-            <input type="number" value={formTrip.price} onChange={e => setFormTrip({ ...formTrip, price: e.target.value })} />
+            <input type="number" {...register('price')} />
+            {errors.price && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.price.message}</p>}
           </div>
+
           <div className="form-group">
             <label>Trạng thái:</label>
-            <select value={formTrip.status} onChange={e => setFormTrip({ ...formTrip, status: e.target.value })}>
+            <select {...register('status')}>
               <option value="active">Đã lên lịch</option>
               <option value="completed">Đã hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>
+            {errors.status && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.status.message}</p>}
           </div>
         </ReusableModal>
       </div>
