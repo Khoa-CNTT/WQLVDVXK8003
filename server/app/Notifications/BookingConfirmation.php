@@ -50,7 +50,7 @@ class BookingConfirmation extends Notification implements ShouldQueue
             ->line('Cảm ơn bạn đã đặt vé tại Phương Thanh Express.')
             ->line('Chi tiết đặt vé của bạn:')
             ->line("Mã đặt vé: {$this->booking->id}")
-            ->line("Tuyến xe: {$this->booking->trip->route->name}")
+            ->line("Tuyến xe: {$this->booking->trip->line->name}")
             ->line("Thời gian khởi hành: {$this->booking->trip->departure_time}")
             ->line("Số ghế: " . implode(', ', $this->booking->seats->pluck('name')->toArray()))
             ->line("Tổng tiền: " . number_format($this->booking->total_amount) . ' VNĐ')

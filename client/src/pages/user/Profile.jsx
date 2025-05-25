@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApi } from '../../hooks/useApi';
 import './Profile.css';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const api = useApi();
   
   // States
   const [loading, setLoading] = useState(true);
@@ -75,69 +77,38 @@ const Profile = () => {
   // Load user profile
   useEffect(() => {
     const loadProfile = async () => {
-      // Check if user is logged in
       if (!isAuthenticated) {
         setLoading(false);
         return;
       }
-
       try {
-        // In a real app, you would fetch the user profile from your API
-        // const response = await api.getUserProfile();
-        // const profileData = response.data;
-        
-        // For now, use dummy data or user info from AuthContext
-        const dummyProfile = {
-          name: user?.name || "Nguyễn Văn A",
-          email: user?.email || "nguyen.van.a@example.com",
-          phone: user?.phone || "0123456789",
-          created_at: user?.created_at || "2023-01-01T00:00:00Z"
-        };
-        
-        const dummyStats = {
-          booking_count: 5,
-          ticket_count: 8
-        };
-        
-        // Update states
-        setUserProfile(dummyProfile);
-        setFormData({
-          name: dummyProfile.name,
-          email: dummyProfile.email,
-          phone: dummyProfile.phone
+        // Gọi API lấy thông tin user và thống kê
+        const response = await api.get('/user');
+        const profileData = response.data.data.user;
+        const statsData = response.data.data.stats;
+        setUserProfile({
+          name: profileData.name,
+          email: profileData.email,
+          phone: profileData.phone,
+          created_at: profileData.created_at
         });
-        setStats(dummyStats);
+        setFormData({
+          name: profileData.name,
+          email: profileData.email,
+          phone: profileData.phone
+        });
+        setStats({
+          booking_count: statsData.booking_count,
+          ticket_count: statsData.ticket_count
+        });
         setLoading(false);
-        
       } catch (error) {
-        console.error("Error loading profile:", error);
-        
-        // Use dummy data for testing
-        const dummyProfile = {
-          name: "Nguyễn Văn A",
-          email: "nguyen.van.a@example.com",
-          phone: "0123456789",
-          created_at: "2023-01-01T00:00:00Z"
-        };
-        
-        const dummyStats = {
-          booking_count: 5,
-          ticket_count: 8
-        };
-        
-        setUserProfile(dummyProfile);
-        setFormData({
-          name: dummyProfile.name,
-          email: dummyProfile.email,
-          phone: dummyProfile.phone
-        });
-        setStats(dummyStats);
+        console.error('Error loading profile:', error);
         setLoading(false);
       }
     };
-
     loadProfile();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, api]);
 
   // Handle profile update
   const handleProfileUpdate = async (e) => {
@@ -313,7 +284,7 @@ const Profile = () => {
                     </div>
                     
                     <div className="action-buttons center">
-                      <Link to="/my-bookings" className="btn-modern">Xem vé đã đặt</Link>
+                      <Link to="/my-bookinglogin" className="btn-modern">Xem vé đã đặt</Link>
                     </div>
                   </div>
                 </div>

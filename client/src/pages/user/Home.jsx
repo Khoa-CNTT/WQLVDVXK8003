@@ -63,7 +63,10 @@ const Home = () => {
       showNotification("Không được chọn ngày trong quá khứ.", "error");
       return;
     }
-
+    if (departure !== "Đà Nẵng" && destination !== "Đà Nẵng") {
+      showNotification("Chỉ hỗ trợ chuyến xe từ Đà Nẵng đi hoặc về Đà Nẵng!", "error");
+      return;
+    }
     if (departure && destination && date) {
       navigate(`/booking-resultslogin?departure=${encodeURIComponent(departure)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}`);
     } else {

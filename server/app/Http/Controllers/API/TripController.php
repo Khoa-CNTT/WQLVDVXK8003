@@ -37,8 +37,11 @@ class TripController extends Controller
         }
 
         // Tìm các route phù hợp
-        $lines = \App\Models\Line::where('departure', 'like', '%' . $request->departure . '%')
-                        ->where('destination', 'like', '%' . $request->destination . '%')
+        $departure = trim(mb_strtolower($request->departure));
+        $destination = trim(mb_strtolower($request->destination));
+
+        $lines = \App\Models\Line::whereRaw('LOWER(TRIM(departure)) = ?', [$departure])
+                        ->whereRaw('LOWER(TRIM(destination)) = ?', [$destination])
                         ->where('status', 'active')
                         ->pluck('id');
 
@@ -53,12 +56,17 @@ class TripController extends Controller
         // Tìm các trip trong ngày đã chọn
         $searchDate = Carbon::parse($request->date)->format('Y-m-d');
 
-        $trips = Trip::with(['line', 'vehicle', 'driver'])
+        $tripsQuery = Trip::with(['line', 'vehicle', 'driver'])
                       ->whereIn('line_id', $lines)
                       ->whereDate('departure_time', $searchDate)
-                      ->where('status', 'active')
-                      ->orderBy('departure_time')
-                      ->get();
+                      ->where('status', 'active');
+
+        // Nếu tìm kiếm ngày hôm nay thì chỉ lấy chuyến chưa khởi hành
+        if ($searchDate === Carbon::now()->format('Y-m-d')) {
+            $tripsQuery->where('departure_time', '>=', Carbon::now());
+        }
+
+        $trips = $tripsQuery->orderBy('departure_time')->get();
 
         // Lấy thông tin số ghế đã đặt cho mỗi chuyến
         foreach ($trips as $trip) {
@@ -82,6 +90,26 @@ class TripController extends Controller
                 ]
             ]
         ]);
+    }
+
+    /**
+     * Tìm các tuyến đường phù hợp (tích hợp từ file ngoài server)
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function findRoutes(Request $request)
+    {
+        // Tìm các route phù hợp
+        $departure = trim(mb_strtolower($request->departure));
+        $destination = trim(mb_strtolower($request->destination));
+
+        $lines = \App\Models\Line::whereRaw('LOWER(TRIM(departure)) = ?', [$departure])
+                        ->whereRaw('LOWER(TRIM(destination)) = ?', [$destination])
+                        ->where('status', 'active')
+                        ->pluck('id');
+
+        return response()->json(['lines' => $lines]);
     }
 
     /**

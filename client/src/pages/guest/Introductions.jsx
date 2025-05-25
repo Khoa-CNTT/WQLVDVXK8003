@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useApi } from '../../hooks/useApi';
 
 import './Introductions.css';
 
 const Introductions = () => {
   const navigate = useNavigate();
+  const api = useApi();
+  const [lines, setLines] = useState([]);
   
   // State for slider
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -21,6 +24,20 @@ const Introductions = () => {
     "https://carshop.vn/wp-content/uploads/2022/07/anh-xe-giuong-nam-37.jpg"
   ];
 
+  useEffect(() => {
+    const fetchLines = async () => {
+      try {
+        const response = await api.get('/lines');
+        console.log('responseLine', response)
+        setLines(response.data);
+      } catch (error) {
+        console.error('Lỗi khi fetch tuyến:', error);
+      }
+    };
+
+    fetchLines();
+  }, []);
+
   // Handle booking form submit - Trực tiếp điều hướng đến /booking-results
   const handleBookingSubmit = (e) => {
     e.preventDefault();
@@ -33,6 +50,11 @@ const Introductions = () => {
       showNotification("Không được chọn ngày trong quá khứ.", "error");
       return;
     }
+    // Chỉ cho phép Đà Nẵng là nơi đi hoặc nơi đến
+    if (departure !== "Đà Nẵng" && destination !== "Đà Nẵng") {
+      showNotification("Chỉ hỗ trợ chuyến xe từ Đà Nẵng đi hoặc về Đà Nẵng!", "error");
+      return;
+    }
     
     if (departure && destination && date) {
       navigate(`/booking-results?departure=${encodeURIComponent(departure)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}`);
@@ -42,9 +64,8 @@ const Introductions = () => {
   };
 
   // View route detail - Điều hướng đến trang booking-results
-  const viewRouteDetail = (departure, destination) => {
-    const today = new Date().toISOString().split("T")[0];
-    navigate(`/booking-results?departure=${encodeURIComponent(departure)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(today)}`);
+  const viewLineDetail = (lineId) => {
+    navigate(`/booking-results?line_id=${lineId}`);
   };
 
   // View route list - Điều hướng đến trang booking-results
@@ -180,10 +201,13 @@ const Introductions = () => {
                   </svg>
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a href="#" onClick={() => viewRouteDetail('Đà Nẵng', 'Quảng Bình')} className="dropdown-item">Đà Nẵng - Quảng Bình</a></li>
-                  <li><a href="#" onClick={() => viewRouteDetail('Đà Nẵng', 'Nghệ An')} className="dropdown-item">Đà Nẵng - Nghệ An</a></li>
-                  <li><a href="#" onClick={() => viewRouteDetail('Đà Nẵng', 'Hà Giang')} className="dropdown-item">Đà Nẵng - Hà Giang</a></li>
-                  <li><a href="#" onClick={() => viewRouteDetail('Đà Nẵng', 'Hồ Chí Minh')} className="dropdown-item">Đà Nẵng - HCM</a></li>
+                  {lines.map((line) => (
+                    <li key={line.id}>
+                      <Link to={`/booking-results?line_id=${line.id}`} className="dropdown-item">
+                        {line.departure} → {line.destination}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </li>
               <li><Link to="/utilities" className="nav-link">Tiện ích</Link></li>
