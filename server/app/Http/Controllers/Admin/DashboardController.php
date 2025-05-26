@@ -8,6 +8,8 @@ use App\Models\Trip;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Driver;
+use App\Models\Vehicle;
+use App\Models\Line;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -72,5 +74,63 @@ class DashboardController extends Controller
             'totalDrivers',
             'revenueChart'
         ));
+    }
+
+    public function apiStats()
+    {
+        // Đếm số chuyến xe hôm nay
+        $todayTripCount = Trip::whereDate('departure_time', Carbon::today())->count();
+        $ticketCount = Ticket::count();
+        $driversCount = Driver::count();
+        $vehiclesCount = Vehicle::count();
+        $linesCount = Line::count();
+
+        // Dữ liệu động cho kinh nghiệm tài xế (tự động lấy tất cả các nhóm năm kinh nghiệm thực tế)
+        $experienceGroups = Driver::select('experience_years')->distinct()->pluck('experience_years')->sort()->values();
+        $driverExpCounts = [];
+        foreach ($experienceGroups as $exp) {
+            $driverExpCounts[] = Driver::where('experience_years', $exp)->count();
+        }
+        $driverExperienceData = [
+            'labels' => $experienceGroups->map(function($y) { return $y . ' năm'; }),
+            'datasets' => [[
+                'label' => 'Số tài xế',
+                'data' => $driverExpCounts,
+                'backgroundColor' => '#f97316',
+                'borderColor' => '#ea580c',
+                'borderWidth' => 1
+            ]]
+        ];
+
+        // Dữ liệu động cho loại phương tiện
+        $vehicleTypes = Vehicle::select('type')->distinct()->pluck('type');
+        $vehicleCounts = [];
+        foreach ($vehicleTypes as $type) {
+            $vehicleCounts[] = Vehicle::where('type', $type)->count();
+        }
+        $vehicleData = [
+            'labels' => $vehicleTypes,
+            'datasets' => [[
+                'label' => 'Phương tiện',
+                'data' => $vehicleCounts,
+                'backgroundColor' => [
+                    '#3b82f6', '#ef4444', '#facc15', '#22c55e', '#f97316', '#10b981'
+                ],
+                'borderWidth' => 1
+            ]]
+        ];
+
+        $lines = Line::all(); // Lấy danh sách tất cả tuyến đường
+
+        return response()->json([
+            'todayTripCount' => $todayTripCount,
+            'ticketCount' => $ticketCount,
+            'driversCount' => $driversCount,
+            'vehiclesCount' => $vehiclesCount,
+            'linesCount' => $linesCount,
+            'lines' => $lines, // Trả về danh sách tuyến đường
+            'driverExperienceData' => $driverExperienceData,
+            'vehicleData' => $vehicleData
+        ]);
     }
 }

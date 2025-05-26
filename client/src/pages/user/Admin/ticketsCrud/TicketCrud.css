@@ -20,7 +20,7 @@ body {
 
 /* Sidebar styles */
 .sidebar {
-    width: 205px;
+    width: 340px;
     background-color: white;
     border-right: 1px solid #e5e7eb;
     position: fixed;
@@ -75,7 +75,7 @@ body {
 /* Main content */
 .main-content {
     flex: 1;
-    margin-left: 205px;
+    margin-left: 340px;
 }
 
 /* Header */
@@ -119,7 +119,13 @@ body {
 
 /* Ticket container */
 .ticket-container {
-    padding: 20px;
+    width: 100%;
+    max-width: 1800px;
+    margin: 32px auto 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    padding: 24px;
 }
 
 .page-title {
@@ -151,6 +157,7 @@ body {
 /* Table styles */
 .ticket-table {
     width: 100%;
+    table-layout: auto;
     border-collapse: collapse;
     background-color: white;
     border-radius: 8px;
@@ -323,4 +330,35 @@ body {
     padding: 16px;
     border-radius: 4px;
     margin-bottom: 20px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 24px;
+    gap: 4px;
+}
+
+.pagination-btn {
+    border: none;
+    background: #f8fafc;
+    color: #374151;
+    font-size: 18px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-weight: 500;
+}
+
+.pagination-btn.active {
+    background: #f97316;
+    color: #fff;
+}
+
+.pagination-btn:disabled {
+    background: #f3f4f6;
+    color: #bdbdbd;
+    cursor: not-allowed;
 }

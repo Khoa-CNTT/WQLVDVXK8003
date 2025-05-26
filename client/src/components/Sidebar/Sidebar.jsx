@@ -9,7 +9,6 @@ const menuItems = [
   { path: '/admin/trips', label: 'Chuyến xe' },
   { path: '/admin/drivers', label: 'Tài xế' },
   { path: '/admin/customers', label: 'Khách hàng' },
-  { path: '/admin/amenities', label: 'Tiện ích' },
 ];
 
 const MenuItem = ({ to, children }) => (

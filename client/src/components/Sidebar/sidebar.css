@@ -4,6 +4,7 @@
   text-decoration: none;
   color: #333;
   transition: background-color 0.2s;
+  border-bottom: 1px solid #222 !important;
 }
 
 .menu-item:hover {
@@ -14,4 +15,12 @@
   background-color: #f97316;
   color: white;
   border-radius: 4px;
+}
+
+.menu-item:last-child {
+  border-bottom: none !important;
+}
+
+.menu {
+  border-bottom: 1px solid #222;
 }

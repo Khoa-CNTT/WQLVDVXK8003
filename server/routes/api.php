@@ -14,6 +14,7 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ChatbotController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,6 +104,9 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum','admin'])->group(function 
 
     // Quản lý chatbot
     Route::get('chatbot/logs', [ChatbotController::class, 'logs']);
+
+    // Dashboard
+    Route::get('dashboard', [DashboardController::class, 'apiStats']);
 });
 
 // Chatbot routes

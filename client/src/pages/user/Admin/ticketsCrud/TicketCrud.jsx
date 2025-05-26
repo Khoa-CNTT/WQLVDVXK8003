@@ -27,6 +27,12 @@ const TicketCrud = () => {
         status: '',
     });
 
+    // State cho phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    const totalPages = Math.ceil(tickets.length / itemsPerPage);
+    const paginatedTickets = tickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
     // Hàm lấy token từ localStorage
     const getToken = () => {
         const authData = localStorage.getItem(Storage.AUTH_DATA);
@@ -82,7 +88,7 @@ const TicketCrud = () => {
                 try {
                     // Lấy dữ liệu tuyến đường và vé xe
                     const [routesResponse, ticketsResponse] = await Promise.all([
-                        axios.get('http://127.0.0.1:8000/api/v1/admin/routes', config),
+                        axios.get('http://127.0.0.1:8000/api/v1/admin/lines', config),
                         axios.get('http://127.0.0.1:8000/api/v1/admin/tickets/all', config)
                     ]);
 
@@ -93,44 +99,22 @@ const TicketCrud = () => {
 
                     // Xử lý dữ liệu vé xe
                     if (ticketsResponse.data && ticketsResponse.data.data) {
-                        setTickets(ticketsResponse.data.data);
+                        // Nếu trả về dạng phân trang Laravel thì lấy .data, còn không thì lấy trực tiếp
+                        const ticketList = Array.isArray(ticketsResponse.data.data)
+                          ? ticketsResponse.data.data
+                          : ticketsResponse.data.data.data || [];
+                        setTickets(ticketList);
                     }
 
                     setLoading(false);
                 } catch (apiError) {
                     console.error('API error:', apiError);
-                    // Sử dụng dữ liệu mẫu nếu API lỗi
-                    setRoutes([
-                        { id: 1, name: "Đà Nẵng - Hà Giang", seats: 45, departure_date: "2025-05-01", price: 800000 },
-                        { id: 2, name: "Đà Nẵng - Quảng Bình", seats: 40, departure_date: "2025-05-02", price: 500000 },
-                        { id: 3, name: "Đà Nẵng - Nghệ An", seats: 50, departure_date: "2025-05-03", price: 600000 }
-                    ]);
-
-                    setTickets([
-                        { id: 101, route_id: 1, customer_name: "Nguyễn Văn A", seat_number: 5, total_price: 800000, status: "completed" },
-                        { id: 102, route_id: 1, customer_name: "Trần Thị B", seat_number: 12, total_price: 800000, status: "pending" },
-                        { id: 103, route_id: 2, customer_name: "Lê Văn C", seat_number: 8, total_price: 500000, status: "completed" }
-                    ]);
-
                     setLoading(false);
                 }
             } catch (err) {
                 console.error('Error fetching data:', err);
                 setError(err.message || 'Đã xảy ra lỗi khi tải dữ liệu');
                 setLoading(false);
-
-                // Sử dụng dữ liệu mẫu trong trường hợp lỗi
-                setRoutes([
-                    { id: 1, name: "Đà Nẵng - Hà Giang", seats: 45, departure_date: "2025-05-01", price: 800000 },
-                    { id: 2, name: "Đà Nẵng - Quảng Bình", seats: 40, departure_date: "2025-05-02", price: 500000 },
-                    { id: 3, name: "Đà Nẵng - Nghệ An", seats: 50, departure_date: "2025-05-03", price: 600000 }
-                ]);
-
-                setTickets([
-                    { id: 101, route_id: 1, customer_name: "Nguyễn Văn A", seat_number: 5, total_price: 800000, status: "completed" },
-                    { id: 102, route_id: 1, customer_name: "Trần Thị B", seat_number: 12, total_price: 800000, status: "pending" },
-                    { id: 103, route_id: 2, customer_name: "Lê Văn C", seat_number: 8, total_price: 500000, status: "completed" }
-                ]);
             }
         };
 
@@ -357,45 +341,52 @@ const TicketCrud = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {tickets?.map(ticket => {
-                                    const route = routes.find(r => r.id === ticket.route_id);
-                                    return (
-                                        <tr key={ticket.id}>
-                                            <td>{ticket.id}</td>
-                                            <td>{route ? route.name : 'Không xác định'}</td>
-                                            <td>{ticket.customer_name}</td>
-                                            <td>{route ? formatDate(route.departure_date) : 'N/A'}</td>
-                                            <td>{ticket.seat_number}</td>
-                                            <td>{ticket.total_price.toLocaleString('vi-VN')} VNĐ</td>
-                                            <td>
-                                                <span className={
-                                                    ticket.status === 'completed' ? 'status-success' :
-                                                        ticket.status === 'pending' ? 'status-pending' :
-                                                            'status-canceled'
-                                                }>
-                                                    {translateStatus(ticket.status)}
-                                                </span>
-                                            </td>
-                                            <td className="action-buttons">
-                                                <button
-                                                    className="edit-btn"
-                                                    onClick={() => editTicket(ticket.id)}
-                                                >
-                                                    Sửa
-                                                </button>
-                                                <button
-                                                    className="delete-btn"
-                                                    onClick={() => deleteTicket(ticket.id)}
-                                                >
-                                                    Xóa
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                {paginatedTickets?.map(ticket => (
+                                    <tr key={ticket.id}>
+                                        <td>{ticket.id}</td>
+                                        <td>{ticket.trip?.line ? `${ticket.trip.line.departure} → ${ticket.trip.line.destination}` : 'Không xác định'}</td>
+                                        <td>{ticket.booking?.passenger_name || ticket.booking?.user?.name || 'N/A'}</td>
+                                        <td>{ticket.trip?.departure_time ? formatDate(ticket.trip.departure_time) : 'N/A'}</td>
+                                        <td>{ticket.seat?.seat_number || 'N/A'}</td>
+                                        <td>{(Number(ticket.trip?.price) || 0).toLocaleString('vi-VN')} VNĐ</td>
+                                        <td>
+                                            <span className={
+                                                ticket.status === 'completed' ? 'status-success' :
+                                                ticket.status === 'pending' ? 'status-pending' :
+                                                'status-canceled'
+                                            }>
+                                                {translateStatus(ticket.status)}
+                                            </span>
+                                        </td>
+                                        <td className="action-buttons">
+                                            <button className="edit-btn" onClick={() => editTicket(ticket.id)}>Sửa</button>
+                                            <button className="delete-btn" onClick={() => deleteTicket(ticket.id)}>Xóa</button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     )}
+
+                    {/* Phân trang dưới bảng */}
+                    <div className="pagination">
+                        <button className="pagination-btn" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                            &#8592;
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                            <button
+                                key={i + 1}
+                                className={`pagination-btn${currentPage === i + 1 ? ' active' : ''}`}
+                                onClick={() => setCurrentPage(i + 1)}
+                                style={{ minWidth: 40 }}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+                        <button className="pagination-btn" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                            &#8594;
+                        </button>
+                    </div>
                 </div>
                 {/* Modal cho Thêm/Sửa vé xe */}
                 <ReusableModal

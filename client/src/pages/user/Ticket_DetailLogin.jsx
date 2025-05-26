@@ -335,8 +335,7 @@ const Ticket_Detail = () => {
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
                   <option value="cash">Thanh toán khi lên xe</option>
-                  <option value="vnpay">VNPAY</option>
-                  <option value="momo">MOMO</option>
+                  <option value="momo">QR chuyển khoản</option>
                 </select>
               </div>
               <button
@@ -362,6 +361,26 @@ const Ticket_Detail = () => {
                 {bookingResult.message}
               </div>
             )}
+
+            {/* Hiển thị QR chuyển khoản sau khi đặt vé thành công và chọn phương thức QR */}
+            {bookingResult.message && !bookingResult.isError && paymentMethod === 'momo' && (
+              <div className="qr-payment-info">
+                <h3>Thông tin chuyển khoản</h3>
+                <p><b>Ngân hàng:</b> Techcombank</p>
+                <p><b>Số tài khoản:</b> 77779797979797</p>
+                <p><b>Tên tài khoản:</b> Trương Công Huỳnh Nhất Trí</p>
+                <p><b>Số tiền:</b> {totalPrice.toLocaleString()} VND</p>
+                <p><b>Nội dung:</b> Thanh toan ve xe - {bookingCode || 'Mã đặt vé'}</p>
+                <img
+                  src={`https://img.vietqr.io/image/TCB-77779797979797-compact2.png?amount=${totalPrice}&addInfo=${encodeURIComponent(
+                    `Thanh toan ve xe - ${bookingCode || ''}`
+                  )}&accountName=${encodeURIComponent('Trương Công Huỳnh Nhất Trí')}`}
+                  alt="QR chuyển khoản Techcombank"
+                  style={{ width: 256, margin: '16px 0' }}
+                />
+                <p style={{color: 'red', fontWeight: 600}}>Vui lòng chuyển khoản đúng số tiền và nội dung để hệ thống tự động xác nhận!</p>
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -375,9 +394,32 @@ const Ticket_Detail = () => {
               <svg className="success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
               </svg>
-              <h3>Đặt vé thành công!</h3>
-              <p>Cảm ơn bạn đã đặt vé tại Phương Thanh Express.</p>
+              <h3>Đặt vé thành công! Vui lòng chuyển khoản để hoàn tất thanh toán.</h3>
+              <p style={{fontSize: '14px', color: '#888', marginBottom: 8}}>
+                Vé sẽ được xác nhận sau khi hệ thống nhận được chuyển khoản đúng số tiền và nội dung.
+              </p>
               <p className="booking-code">Mã đặt vé: {bookingCode}</p>
+
+              {/* Hiển thị QR chuyển khoản trong modal nếu chọn QR */}
+              {paymentMethod === 'momo' && (
+                <div className="qr-payment-info" style={{marginTop: 16}}>
+                  <h3>Thông tin chuyển khoản</h3>
+                  <p><b>Ngân hàng:</b> Techcombank</p>
+                  <p><b>Số tài khoản:</b> 77779797979797</p>
+                  <p><b>Tên tài khoản:</b> Trương Công Huỳnh Nhất Trí</p>
+                  <p><b>Số tiền:</b> {totalPrice.toLocaleString()} VND</p>
+                  <p><b>Nội dung:</b> Thanh toan ve xe - {bookingCode || 'Mã đặt vé'}</p>
+                  <img
+                    src={`https://img.vietqr.io/image/TCB-77779797979797-compact2.png?amount=${totalPrice}&addInfo=${encodeURIComponent(
+                      `Thanh toan ve xe - ${bookingCode || ''}`
+                    )}&accountName=${encodeURIComponent('Trương Công Huỳnh Nhất Trí')}`}
+                    alt="QR chuyển khoản Techcombank"
+                    style={{ width: 256, margin: '16px 0' }}
+                  />
+                  <p style={{color: 'red', fontWeight: 600}}>Vui lòng chuyển khoản đúng số tiền và nội dung để hệ thống tự động xác nhận!</p>
+                </div>
+              )}
+
               <div className="modal-actions">
                 {/* Sử dụng buttons với handlers thay vì Link component */}
                 <button onClick={handleGoHome} className="btn-modern">Về trang chủ</button>
