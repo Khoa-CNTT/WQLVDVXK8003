@@ -101,6 +101,7 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum','admin'])->group(function 
     Route::put('bookings/{id}/status', [BookingController::class, 'updateStatus']);
     Route::get('tickets/all', [TicketController::class, 'adminIndex']);
     Route::put('tickets/{id}/status', [TicketController::class, 'updateStatus']);
+    Route::delete('tickets/{id}', [TicketController::class, 'destroy']);
 
     // Quản lý chatbot
     Route::get('chatbot/logs', [ChatbotController::class, 'logs']);

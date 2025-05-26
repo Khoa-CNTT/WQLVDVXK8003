@@ -4,8 +4,13 @@ import './TicketCrud.css';
 import HomeAdminLayout from '../../../../layouts/AdminLayout';
 import ReusableModal from '../../../../components/ReusableModal/ReusableModal';
 import { Storage } from '../../../../constant/storage';
+import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
+import { useApi } from '../../../../hooks/useApi';
+import { confirmAction, fetchSortedData } from '../../../../utils';
 
 const TicketCrud = () => {
+    const api = useApi();
     const [currentDateTime, setCurrentDateTime] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -19,24 +24,31 @@ const TicketCrud = () => {
     const [routes, setRoutes] = useState([]);
     const [editingTicketId, setEditingTicketId] = useState(null);
 
-    // States cho form
-    const [formData, setFormData] = useState({
-        routeId: '',
-        customer: '',
-        seat: '',
-        status: '',
-    });
-
     // State cho phân trang
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const totalPages = Math.ceil(tickets.length / itemsPerPage);
     const paginatedTickets = tickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm({
+        mode: 'onChange',
+        defaultValues: {
+            trip_id: '',
+            user_id: '',
+            seat_number: '',
+            status: '',
+        },
+    });
+
     // Hàm lấy token từ localStorage
     const getToken = () => {
         const authData = localStorage.getItem(Storage.AUTH_DATA);
-        console.log('authData',authData)
+        console.log('authData', authData)
         if (authData) {
             try {
                 const parsed = JSON.parse(authData);
@@ -101,8 +113,9 @@ const TicketCrud = () => {
                     if (ticketsResponse.data && ticketsResponse.data.data) {
                         // Nếu trả về dạng phân trang Laravel thì lấy .data, còn không thì lấy trực tiếp
                         const ticketList = Array.isArray(ticketsResponse.data.data)
-                          ? ticketsResponse.data.data
-                          : ticketsResponse.data.data.data || [];
+                            ? ticketsResponse.data.data
+                            : ticketsResponse.data.data.data || [];
+                        console.log('ticketList', ticketList)
                         setTickets(ticketList);
                     }
 
@@ -121,182 +134,70 @@ const TicketCrud = () => {
         fetchData();
     }, []);
 
-    // Mở modal thêm vé
-    const openAddTicketModal = () => {
-        setEditingTicketId(null);
-        setModalTitle('Thêm vé xe');
-        setFormData({
-            routeId: '',
-            customer: '',
-            seat: '',
-            status: ''
-        });
+
+    // Mở modal sửa vé
+    const editTicket = (ticket) => {
+        const ticketData = {
+            trip_id: ticket.trip_id,
+            user_id: ticket?.booking.user_id,
+            seat_number: ticket?.seat.seat_number,
+            status: ticket.status
+        };
+        console.log('ticketData', ticketData);
+
+        // Cập nhật giá trị mặc định trong form react-hook-form
+        reset(ticketData);
+
+        // Mở modal và cập nhật tiêu đề
+        setModalTitle('Chỉnh sửa vé');
+        setEditingTicketId(ticket.id);
         setShowModal(true);
     };
 
-    // Mở modal sửa vé
-    const editTicket = (id) => {
-        const ticket = tickets.find(t => t.id === id);
-        if (ticket) {
-            setEditingTicketId(id);
-            setModalTitle('Sửa vé xe');
-            setFormData({
-                routeId: ticket.route_id,
-                customer: ticket.customer_name,
-                seat: ticket.seat_number,
-                status: ticket.status
-            });
-            setShowModal(true);
-        }
-    };
 
-    // Xử lý thay đổi form
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
-    };
 
     // Lưu vé
-    const saveTicket = async () => {
-        const { routeId, customer, seat, status } = formData;
-
-        if (!routeId || !customer || !seat || !status) {
-            alert('Vui lòng điền đầy đủ thông tin!');
-            return;
-        }
-
-        const route = routes.find(r => r.id === parseInt(routeId));
-        if (!route) {
-            alert('Tuyến đường không tồn tại!');
-            return;
-        }
-
-        if (parseInt(seat) <= 0 || parseInt(seat) > route.seats) {
-            alert(`Số ghế phải từ 1 đến ${route.seats}!`);
-            return;
-        }
-
+    const saveTicket = async (data) => {
         try {
-            const token = getToken();
-            const config = {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            };
+            const payload = { ...data }
+            await api.put(`/admin/tickets/${editingTicketId}/status`, payload);
+            toast.success('Cập nhật người vé thành công!');
 
-            const ticketData = {
-                route_id: parseInt(routeId),
-                customer_name: customer,
-                seat_number: parseInt(seat),
-                status: status,
-                total_price: route.price
-            };
 
-            if (editingTicketId) {
-                // Cập nhật vé
-                await axios.put(`http://127.0.0.1:8000/api/v1/admin/tickets/${editingTicketId}`, ticketData, config);
-
-                // Cập nhật state
-                setTickets(tickets.map(ticket =>
-                    ticket.id === editingTicketId
-                        ? {
-                            ...ticket,
-                            route_id: parseInt(routeId),
-                            customer_name: customer,
-                            seat_number: parseInt(seat),
-                            status: status,
-                            total_price: route.price
-                        }
-                        : ticket
-                ));
-            } else {
-                // Thêm vé mới
-                const response = await axios.post('http://127.0.0.1:8000/api/v1/admin/tickets', ticketData, config);
-
-                if (response.data && response.data.data) {
-                    // Thêm vé mới vào state
-                    setTickets([...tickets, response.data.data]);
-                }
-            }
-
-            // Đóng modal
-            setShowModal(false);
         } catch (error) {
-            console.error('Error saving ticket:', error);
-            alert('Đã xảy ra lỗi khi lưu vé xe!');
-
-            // Fallback nếu API lỗi
-            if (editingTicketId) {
-                // Cập nhật state cho trường hợp sửa
-                setTickets(tickets.map(ticket =>
-                    ticket.id === editingTicketId
-                        ? {
-                            ...ticket,
-                            route_id: parseInt(routeId),
-                            customer_name: customer,
-                            seat_number: parseInt(seat),
-                            status: status,
-                            total_price: route.price
-                        }
-                        : ticket
-                ));
-            } else {
-                // Tạo ID mới và thêm vào state cho trường hợp thêm mới
-                const newId = tickets.length ? Math.max(...tickets.map(t => t.id)) + 1 : 101;
-                const newTicket = {
-                    id: newId,
-                    route_id: parseInt(routeId),
-                    customer_name: customer,
-                    seat_number: parseInt(seat),
-                    status: status,
-                    total_price: route.price
-                };
-                setTickets([...tickets, newTicket]);
-            }
-
-            // Đóng modal
-            setShowModal(false);
+            console.error(error);
+            toast.error('Lỗi khi lưu vé');
         }
+        setShowModal(false);
+        setEditingTicketId(null)
+        const updatedTickets = await fetchSortedData(api, '/admin/tickets/all');
+        setTickets(updatedTickets)
     };
 
     // Xóa vé
-    const deleteTicket = async (id) => {
-        if (window.confirm('Bạn có chắc muốn xóa vé xe này?')) {
-            try {
-                const token = getToken();
-                const config = {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
-                };
+    const deleteTicket = (id) => {
+        confirmAction({
+            title: 'Xác nhận xóa vé xe',
+            text: `Bạn có chắc muốn xóa vé xe ID ${id}?`,
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/admin/tickets/${id}`);
+                    toast.success('Xóa vé xe thành công');
+                    const updatedTickets = await fetchSortedData(api, '/admin/tickets/all');
+                    setTickets(updatedTickets)
 
-                // Gọi API xóa vé
-                await axios.delete(`http://127.0.0.1:8000/api/v1/admin/tickets/${id}`, config);
-
-                // Cập nhật state
-                setTickets(tickets.filter(ticket => ticket.id !== id));
-            } catch (error) {
-                console.error('Error deleting ticket:', error);
-                alert('Đã xảy ra lỗi khi xóa vé xe!');
-
-                // Fallback nếu API lỗi
-                setTickets(tickets.filter(ticket => ticket.id !== id));
-            }
-        }
+                } catch (error) {
+                    toast.error('Lỗi khi xóa vé xe');
+                }
+            },
+        });
     };
 
     // Chuyển đổi trạng thái vé thành tiếng Việt
     const translateStatus = (status) => {
         const statusMap = {
-            'completed': 'Thành công',
-            'pending': 'Đang xử lý',
+            'completed': 'Đã thanh toán',
+            'pending': 'Chưa thanh toán',
             'canceled': 'Hủy'
         };
         return statusMap[status] || status;
@@ -315,10 +216,6 @@ const TicketCrud = () => {
                 {/* Nội dung chính */}
                 <div className="ticket-container">
                     <h1 className="page-title">Danh Sách Vé Xe</h1>
-
-                    <div className="action-bar">
-                        <button className="add-btn" onClick={openAddTicketModal}>Thêm Vé Xe</button>
-                    </div>
 
                     {loading ? (
                         <div className="loading-indicator">Đang tải dữ liệu...</div>
@@ -352,14 +249,14 @@ const TicketCrud = () => {
                                         <td>
                                             <span className={
                                                 ticket.status === 'completed' ? 'status-success' :
-                                                ticket.status === 'pending' ? 'status-pending' :
-                                                'status-canceled'
+                                                    ticket.status === 'pending' ? 'status-pending' :
+                                                        'status-canceled'
                                             }>
                                                 {translateStatus(ticket.status)}
                                             </span>
                                         </td>
                                         <td className="action-buttons">
-                                            <button className="edit-btn" onClick={() => editTicket(ticket.id)}>Sửa</button>
+                                            <button className="edit-btn" onClick={() => editTicket(ticket)}>Sửa</button>
                                             <button className="delete-btn" onClick={() => deleteTicket(ticket.id)}>Xóa</button>
                                         </td>
                                     </tr>
@@ -393,55 +290,23 @@ const TicketCrud = () => {
                     show={showModal}
                     title={modalTitle}
                     onClose={() => setShowModal(false)}
-                    onSubmit={saveTicket}
+                    onSubmit={handleSubmit(saveTicket)}
+
                 >
-                    <select
-                        name="routeId"
-                        value={formData.routeId}
-                        onChange={handleInputChange}
-                        className="form-input"
-                        required
-                    >
-                        <option value="" disabled>Chọn tuyến đường</option>
-                        {routes.map(route => (
-                            <option key={route.id} value={route.id}>
-                                {route.name} ({formatDate(route.departure_date)})
-                            </option>
-                        ))}
-                    </select>
+                    <div className="form-group">
+                        <label>Trạng thái:</label>
+                        <select
+                            className="form-input"
+                            {...register('status')}
+                        >
+                            <option value="" disabled>Chọn trạng thái</option>
+                            <option value="completed">Đã thanh toán</option>
+                            <option value="pending">Chưa thanh toán</option>
+                            <option value="canceled">Hủy</option>
+                        </select>
+                        {errors.status && <p className="!text-red-500 !text-sm !mb-0 !mt-0.5">{errors.role_id.message}</p>}
+                    </div>
 
-                    <input
-                        type="text"
-                        name="customer"
-                        value={formData.customer}
-                        onChange={handleInputChange}
-                        className="form-input"
-                        placeholder="Tên khách hàng"
-                        required
-                    />
-
-                    <input
-                        type="number"
-                        name="seat"
-                        value={formData.seat}
-                        onChange={handleInputChange}
-                        className="form-input"
-                        placeholder="Số ghế"
-                        required
-                    />
-
-                    <select
-                        name="status"
-                        value={formData.status}
-                        onChange={handleInputChange}
-                        className="form-input"
-                        required
-                    >
-                        <option value="" disabled>Chọn trạng thái</option>
-                        <option value="completed">Thành công</option>
-                        <option value="pending">Đang xử lý</option>
-                        <option value="canceled">Hủy</option>
-                    </select>
                 </ReusableModal>
 
             </div>

@@ -106,10 +106,9 @@ class TicketController extends Controller
             'trip_id' => 'required|exists:trips,id',
             'user_id' => 'required|exists:users,id',
             'seat_number' => 'required|string',
-            'price' => 'required|numeric|min:0',
             'status' => 'required|in:pending,confirmed,completed,cancelled',
-            'payment_method' => 'required|in:cash,vnpay,momo,bank_transfer',
-            'payment_status' => 'required|in:pending,paid,refunded',
+            'payment_method' => 'in:cash,vnpay,momo,bank_transfer',
+            'payment_status' => 'in:pending,paid,refunded',
         ]);
 
         if ($validator->fails()) {
