@@ -5,6 +5,16 @@ export default function Chatbot() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
 
+  // Gợi ý câu hỏi nhanh
+  const quickQuestions = [
+    "Giá vé tuyến Đà Nẵng - Quảng Bình?",
+    "Có khuyến mãi gì không?",
+    "Đặt vé online như thế nào?",
+    "Các tiện ích trên xe là gì?",
+    "Hotline liên hệ?",
+    "Tuyến xe nổi bật?",
+  ];
+
   const toggleChatbot = () => {
     setChatbotOpen(prev => {
       const newState = !prev;
@@ -52,6 +62,14 @@ export default function Chatbot() {
     }
   };
 
+  const handleQuickQuestion = (q) => {
+    setChatInput(q);
+    setTimeout(() => {
+      const e = { key: "Enter", preventDefault: () => {} };
+      handleChatSubmit(e);
+    }, 100);
+  };
+
   return (
     <>
       {chatbotOpen && (
@@ -68,6 +86,12 @@ export default function Chatbot() {
               >
                 <span dangerouslySetInnerHTML={{ __html: message.text }} />
               </div>
+            ))}
+          </div>
+          {/* Gợi ý câu hỏi nhanh */}
+          <div className="chatbot-quick-questions">
+            {quickQuestions.map((q, idx) => (
+              <button key={idx} className="quick-question-btn" onClick={() => handleQuickQuestion(q)}>{q}</button>
             ))}
           </div>
           <div className="chatbot-input-container">

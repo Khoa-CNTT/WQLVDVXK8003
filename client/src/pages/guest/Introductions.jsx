@@ -145,8 +145,11 @@ const Introductions = () => {
       setChatMessages(prev => [...prev, { text: userMessage, type: "user" }, { text: "Đang trả lời...", type: "loading" }]);
       setChatInput("");
       try {
-        const response = await axios.post('http://localhost:8888/chat', { message: userMessage });
-        const botResponse = response.data?.response || "Bot không trả lời.";
+        const response = await axios.post('/api/v1/chatbot/query', { 
+          query: userMessage, 
+          session_id: '1' // hoặc session_id động nếu có
+        });
+        const botResponse = response.data?.data?.data?.message || response.data?.data?.message || response.data?.message || "Bot không trả lời.";
         setChatMessages(prev => {
           const newMsgs = [...prev];
           const idx = newMsgs.findIndex(m => m.type === 'loading');

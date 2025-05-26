@@ -6,6 +6,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use App\Models\Line;
+use App\Models\Trip;
+use App\Models\Vehicle;
+use App\Models\Driver;
+use App\Models\Promotion;
+use App\Models\Seat;
+use App\Models\Ticket;
 
 class ChatbotService
 {
@@ -13,16 +20,18 @@ class ChatbotService
     protected $baseUrl;
     protected $timeout;
     protected $cacheTtl;
+    protected $model;
 
     public function __construct()
     {
-        $this->apiKey = env('CHATBOT_API_KEY', 'f5f2d613156777d0e0455273788d46e4');
+        $this->apiKey = Config::get('chatbot.api_key');
         $this->baseUrl = Config::get('chatbot.base_url');
         $this->timeout = Config::get('chatbot.timeout');
         $this->cacheTtl = Config::get('chatbot.cache_ttl');
+        $this->model = Config::get('chatbot.model');
 
-        if (empty($this->apiKey)) {
-            throw new \RuntimeException('Chatbot API key is not configured');
+        if (empty($this->apiKey) || $this->apiKey === 'your_api_key_here') {
+            throw new \RuntimeException('Anthropic API key is not configured');
         }
     }
 
@@ -39,11 +48,287 @@ class ChatbotService
 
         Log::info('Chatbot query received', ['query' => $query]);
 
-        // Danh sách từ khóa và câu trả lời
+        // Trả lời giá vé tuyến xe dựa trên database
+        if (str_contains($query, 'giá vé')) {
+            $lines = Line::all();
+            foreach ($lines as $line) {
+                if (
+                    str_contains($query, mb_strtolower($line->departure)) &&
+                    str_contains($query, mb_strtolower($line->destination))
+                ) {
+                    return [
+                        'success' => true,
+                        'data' => [
+                            'message' => "Giá vé từ {$line->departure} đến {$line->destination} là: " . number_format($line->base_price) . "đ"
+                        ]
+                    ];
+                }
+            }
+            return [
+                'success' => true,
+                'data' => [
+                    'message' => "Xin lỗi, tôi không tìm thấy thông tin giá vé cho tuyến bạn hỏi."
+                ]
+            ];
+        }
+
+        // Trả lời đặt vé, tuyến xe, lịch trình dựa trên database
+        if (
+            (str_contains($query, 'đặt vé') || str_contains($query, 'mua vé') || str_contains($query, 'tuyến xe') || str_contains($query, 'lịch trình') || str_contains($query, 'giờ chạy')) &&
+            (str_contains($query, 'đà nẵng') && str_contains($query, 'quảng bình'))
+        ) {
+            $line = Line::where('departure', 'like', '%Đà Nẵng%')
+                        ->where('destination', 'like', '%Quảng Bình%')
+                        ->first();
+            if ($line) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Tuyến xe {$line->departure} - {$line->destination}: Giá vé " . number_format($line->base_price) . "đ. Bạn có thể đặt vé trên website hoặc liên hệ hotline 0905.999999."
+                    ]
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Xin lỗi, hiện tại chưa có tuyến xe Đà Nẵng - Quảng Bình."
+                    ]
+                ];
+            }
+        }
+
+        // Trả lời danh sách các tuyến xe của nhà xe
+        if (
+            str_contains($query, 'tuyến xe') || str_contains($query, 'các tuyến') || str_contains($query, 'những tuyến')
+        ) {
+            $lines = Line::all();
+            if ($lines->count()) {
+                $list = [];
+                foreach ($lines as $line) {
+                    $list[] = "{$line->departure} - {$line->destination}";
+                }
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Các tuyến xe hiện có của Phương Thanh Express:<br>" . implode('<br>', $list)
+                    ]
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Hiện tại chưa có dữ liệu tuyến xe."
+                    ]
+                ];
+            }
+        }
+
+        // Trả lời danh sách chuyến xe
+        if (
+            str_contains($query, 'chuyến xe') || str_contains($query, 'các chuyến') || str_contains($query, 'lịch trình chuyến')
+        ) {
+            $trips = Trip::all();
+            if ($trips->count()) {
+                $list = [];
+                foreach ($trips as $trip) {
+                    $list[] = "{$trip->departure} - {$trip->destination} | Xuất phát: {$trip->departure_time} | Đến nơi: {$trip->arrival_time}";
+                }
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Các chuyến xe hiện có:<br>" . implode('<br>', $list)
+                    ]
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Hiện tại chưa có dữ liệu chuyến xe."
+                    ]
+                ];
+            }
+        }
+
+        // Trả lời danh sách xe
+        if (
+            str_contains($query, 'loại xe') || str_contains($query, 'xe nào') || str_contains($query, 'phương tiện')
+        ) {
+            $vehicles = Vehicle::all();
+            if ($vehicles->count()) {
+                $list = [];
+                foreach ($vehicles as $vehicle) {
+                    $list[] = "{$vehicle->name} - Biển số: {$vehicle->license_plate} - Tiện nghi: {$vehicle->features}";
+                }
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Các xe hiện có:<br>" . implode('<br>', $list)
+                    ]
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Hiện tại chưa có dữ liệu xe."
+                    ]
+                ];
+            }
+        }
+
+        // Trả lời danh sách tài xế
+        if (
+            str_contains($query, 'tài xế') || str_contains($query, 'lái xe') || str_contains($query, 'driver')
+        ) {
+            $drivers = Driver::all();
+            if ($drivers->count()) {
+                $list = [];
+                foreach ($drivers as $driver) {
+                    $list[] = "{$driver->name} - SĐT: {$driver->phone}";
+                }
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Danh sách tài xế:<br>" . implode('<br>', $list)
+                    ]
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Hiện tại chưa có dữ liệu tài xế."
+                    ]
+                ];
+            }
+        }
+
+        // Trả lời danh sách khuyến mãi
+        if (
+            str_contains($query, 'khuyến mãi') || str_contains($query, 'ưu đãi') || str_contains($query, 'promotion')
+        ) {
+            return [
+                'success' => true,
+                'data' => [
+                    'message' => "Các chương trình khuyến mãi hiện có của Phương Thanh Express:<br>🎁 Giảm giá 10% cho khách hàng đặt vé online lần đầu<br>👥 Ưu đãi nhóm từ 5 người trở lên<br>🎂 Tặng quà sinh nhật cho khách hàng thân thiết<br>⭐ Chương trình tích điểm đổi vé miễn phí<br>🎫 Nhiều mã giảm giá hấp dẫn vào các dịp lễ, Tết<br>Liên hệ hotline 0905999555 để biết thêm chi tiết!"
+                ]
+            ];
+        }
+
+        // Trả lời tiện ích trên xe
+        if (
+            str_contains($query, 'tiện ích') || str_contains($query, 'tiện nghi') || str_contains($query, 'dịch vụ trên xe')
+        ) {
+            return [
+                'success' => true,
+                'data' => [
+                    'message' => "Các tiện ích trên xe Phương Thanh Express:<br>📶 Wifi miễn phí tốc độ cao<br>🥤 Nước uống, khăn lạnh miễn phí<br>🛏️ Ghế giường nằm êm ái, có phòng riêng (xe VIP)<br>❄️ Điều hòa, máy lạnh hiện đại<br>🚻 Nhà vệ sinh trên xe<br>🎵 Hệ thống giải trí: tivi, nhạc, sạc điện thoại<br>🚐 Trung chuyển miễn phí nội thành Đà Nẵng<br>🚚 Hỗ trợ gửi hàng, vận chuyển xe máy<br>Bạn cần biết thêm về tiện ích nào không?"
+                ]
+            ];
+        }
+
+        // Trả lời thông tin ghế trống trên chuyến xe
+        if (
+            str_contains($query, 'ghế trống') || str_contains($query, 'còn ghế') || str_contains($query, 'ghế nào')
+        ) {
+            $trip = Trip::where('departure', 'Đà Nẵng')->where('destination', 'Quảng Bình')->first();
+            if ($trip) {
+                $seats = Seat::where('trip_id', $trip->id)->where('status', 'available')->get();
+                if ($seats->count()) {
+                    $seatNumbers = $seats->pluck('seat_number')->toArray();
+                    return [
+                        'success' => true,
+                        'data' => [
+                            'message' => "Các ghế trống trên chuyến Đà Nẵng - Quảng Bình: " . implode(', ', $seatNumbers)
+                        ]
+                    ];
+                } else {
+                    return [
+                        'success' => true,
+                        'data' => [
+                            'message' => "Hiện tại không còn ghế trống trên chuyến này."
+                        ]
+                    ];
+                }
+            } else {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Không tìm thấy chuyến xe Đà Nẵng - Quảng Bình."
+                    ]
+                ];
+            }
+        }
+
+        // Trả lời thông tin vé theo số vé
+        if (preg_match('/vé số (\d+)/', $query, $matches)) {
+            $ticketId = $matches[1];
+            $ticket = Ticket::find($ticketId);
+            if ($ticket) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Thông tin vé số {$ticketId}: Khách hàng: {$ticket->customer_name}, Tuyến: {$ticket->route_id}, Ghế: {$ticket->seat_number}, Trạng thái: {$ticket->status}"
+                    ]
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => "Không tìm thấy vé số {$ticketId}."
+                    ]
+                ];
+            }
+        }
+
+        // Nếu là các câu hỏi về đặt vé online, đặt vé, hướng dẫn đặt vé... thì trả về luôn câu trả lời chuẩn, không gọi AI
+        $datVeKeywords = ['đặt vé', 'online', 'hướng dẫn đặt vé', 'website', 'app', 'ứng dụng', 'mua vé', 'book vé', 'đặt chỗ', 'mua chỗ', 'đặt vé xe khách', 'đặt vé xe khách phương thanh'];
+        foreach ($datVeKeywords as $kw) {
+            if (str_contains($query, $kw)) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => 'Để đặt vé online xe khách Phương Thanh Express, bạn làm theo các bước sau:<br><br>1️⃣ <b>Truy cập website chính thức:</b> <a href="https://phuongthanhexpress.com/dat-ve" target="_blank">https://phuongthanhexpress.com/dat-ve</a><br>2️⃣ <b>Chọn tuyến đường, ngày đi, số lượng vé.</b><br>3️⃣ <b>Chọn ghế mong muốn.</b><br>4️⃣ <b>Nhập thông tin liên hệ (họ tên, số điện thoại).</b><br>5️⃣ <b>Chọn phương thức thanh toán (tiền mặt, chuyển khoản, ví điện tử, v.v.).</b><br>6️⃣ <b>Xác nhận đặt vé.</b><br>7️⃣ <b>Nhận mã vé qua SMS hoặc email.</b><br><br>Nếu cần hỗ trợ, gọi ngay hotline: <a href="tel:0905333333">0905.3333.33</a>'
+                    ]
+                ];
+            }
+        }
+
+        // Nếu là các câu hỏi về giá vé, vé, bao nhiêu... mà không khớp tuyến xe khách trong database, không gọi AI, trả về câu mặc định
+        $giaVeKeywords = ['giá', 'giá vé', 'bao nhiêu', 'vé'];
+        foreach ($giaVeKeywords as $kw) {
+            if (str_contains($query, $kw)) {
+                // Kiểm tra nếu đã trả lời giá vé tuyến xe ở trên thì bỏ qua
+                // Nếu chưa trả lời, nghĩa là không khớp tuyến xe khách trong database
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => 'Xin lỗi, tôi chỉ hỗ trợ thông tin về xe khách Phương Thanh Express. Vui lòng truy cập website hoặc gọi hotline để biết thêm chi tiết.'
+                    ]
+                ];
+            }
+        }
+
+        // Nếu là các câu hỏi về hotline, liên hệ, số điện thoại... thì trả về hotline Phương Thanh Express, không gọi AI
+        $hotlineKeywords = ['hotline', 'liên hệ', 'số điện thoại', 'tổng đài', 'gọi điện', 'contact'];
+        foreach ($hotlineKeywords as $kw) {
+            if (str_contains($query, $kw)) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'message' => 'Hotline đặt vé: <a href="tel:0905333333">0905.3333.33</a> | Gửi hàng: <a href="tel:0905888888">0905.888.888</a> (Anh Mạnh) | Thuê xe: <a href="tel:0905111111">0905.1111.11</a> | Hợp đồng: <a href="tel:0905222222">0905.2222.22</a> (Anh Hùng)'
+                    ]
+                ];
+            }
+        }
+
+        // Danh sách từ khóa và câu trả lời (FAQ)
         $faq = [
             [
                 'keywords' => ['Xin Chào', 'Hello','Alo','Chào'],
                 'answer' => 'Xin chào! Tôi là chatbot của Nhà xe Phương Thanh. Tôi có thể giúp bạn:\n1. Đặt vé xe\n2. Xem lịch trình\n3. Tìm hiểu về chúng tôi\n4. Hỗ trợ khác\nBạn cần tôi giúp gì ạ?'
+            ],
+            [
+                'keywords' => ['thông tin liên hệ', 'liên hệ', 'hotline', 'số điện thoại', 'email'],
+                'answer' => 'Thông tin liên hệ:<br>- Hotline: 0905.999999<br>- Email: phuongthanh@gmail.com<br>- Địa chỉ: 12 Bàu Cầu 12, Hòa Xuân, Hòa Vang, Đà Nẵng'
             ],
             [
                 'keywords' => ['1', 'đặt vé xe', 'đặt vé'],
@@ -132,11 +417,7 @@ class ChatbotService
             ],
             [
                 'keywords' => ['đặt vé', 'mua vé', 'book vé', 'đặt chỗ', 'mua chỗ', 'đặt vé xe khách', 'đặt vé xe khách phương thanh'],
-                'answer' => 'Bạn có thể đặt vé trực tuyến trên website hoặc gọi hotline 0905.3333.33 để được hỗ trợ đặt chỗ nhanh nhất.'
-            ],
-            [
-                'keywords' => ['hotline', 'số điện thoại', 'liên hệ', 'tổng đài', 'gọi điện', 'hotline xe khách', 'hotline xe khách phương thanh','liên hệ xe khách', 'liên hệ xe khách phương thanh','liên lạc', 'liên lạc xe khách', 'liên lạc xe khách phương thanh'],
-                'answer' => 'Hotline đặt vé: 0905.3333.33 | Gửi hàng: 0905.888.888 (Anh Mạnh) | Thuê xe: 0905.1111.11 | Hợp đồng: 0905.2222.22 (Anh Hùng)'
+                'answer' => 'Bạn có thể đặt vé trực tuyến trên website <a href="https://phuongthanhexpress.com/dat-ve" target="_blank">Phương Thanh Express</a> hoặc gọi hotline <a href="tel:0905333333">0905.3333.33</a> để được hỗ trợ đặt chỗ nhanh nhất. 🚍'
             ],
             [
                 'keywords' => ['địa chỉ', 'văn phòng', 'trụ sở', 'đâu', 'ở đâu', 'địa chỉ xe khách', 'địa chỉ nhà xe phương thanh'],
@@ -152,7 +433,7 @@ class ChatbotService
             ],
             [
                 'keywords' => ['tài xế', 'lái xe', 'phục vụ', 'nhân viên', 'tài xế xe khách', 'tài xế xe khách phương thanh'],
-                'answer' => 'Đội ngũ tài xế và nhân viên Phương Thanh được đào tạo chuyên nghiệp, phục vụ tận tâm, lịch sự và chu đáo.'
+                'answer' => 'Đội ngũ tài xế của Phương Thanh:<br>👨‍✈️ Nguyễn Văn A - 0905.111.111<br>👨‍✈️ Trần Văn B - 0905.222.222<br>👨‍✈️ Lê Văn C - 0905.333.333<br>Tất cả đều được đào tạo chuyên nghiệp, phục vụ tận tâm.'
             ],
             [
                 'keywords' => ['thanh toán', 'trả tiền', 'momo', 'vnpay', 'chuyển khoản', 'tiền mặt', 'thanh toán xe khách', 'thanh toán xe khách phương thanh'],
@@ -224,7 +505,7 @@ class ChatbotService
             ],
             [
                 'keywords' => ['đặt vé online', 'website', 'app', 'ứng dụng'],
-                'answer' => 'Bạn có thể đặt vé online qua website hoặc ứng dụng, thanh toán linh hoạt và nhận vé điện tử nhanh chóng.'
+                'answer' => 'Bạn có thể đặt vé online trực tiếp trên website <a href="https://phuongthanhexpress.com/dat-ve" target="_blank">Phương Thanh Express</a> hoặc gọi hotline <a href="tel:0905333333">0905.3333.33</a> để được hỗ trợ đặt vé nhanh nhất!'
             ],
             [
                 'keywords' => ['hủy vé', 'bỏ vé', 'không đi'],
@@ -270,7 +551,82 @@ class ChatbotService
                 'keywords' => ['đặt vé xe khách', 'xe khách', 'xe bus'],
                 'answer' => 'Nhà xe Phương Thanh chuyên xe khách giường nằm chất lượng cao, đặt vé dễ dàng qua website hoặc hotline.'
             ],
-            // Có thể bổ sung thêm nữa nếu muốn!
+            [
+                'keywords' => ['lịch sử nhà xe', 'lịch sử hình thành', 'thành lập từ khi nào', 'lịch sử phát triển', 'quá trình phát triển'],
+                'answer' => 'Nhà xe Phương Thanh được thành lập từ năm 2010, với hơn 10 năm phát triển và phục vụ hàng triệu lượt khách mỗi năm. Chúng tôi không ngừng đổi mới để mang lại trải nghiệm tốt nhất cho khách hàng.'
+            ],
+            [
+                'keywords' => ['sứ mệnh', 'tầm nhìn', 'giá trị cốt lõi', 'mục tiêu', 'cam kết'],
+                'answer' => 'Sứ mệnh của Phương Thanh Express là mang đến dịch vụ vận tải an toàn, tiện nghi, đúng giờ và tận tâm. Giá trị cốt lõi: An toàn - Chất lượng - Khách hàng là trung tâm.'
+            ],
+            [
+                'keywords' => ['đội ngũ', 'nhân sự', 'tài xế', 'nhân viên', 'đội ngũ phục vụ'],
+                'answer' => 'Đội ngũ tài xế và nhân viên của Phương Thanh đều được đào tạo bài bản, chuyên nghiệp, tận tâm phục vụ khách hàng với thái độ thân thiện và trách nhiệm.'
+            ],
+            [
+                'keywords' => ['tuyến nổi bật', 'tuyến chính', 'tuyến xe nổi bật', 'tuyến xe chính'],
+                'answer' => 'Các tuyến nổi bật của Phương Thanh:<br>🛣️ Đà Nẵng - Quảng Bình<br>🛣️ Đà Nẵng - Nghệ An<br>🛣️ Đà Nẵng - Hà Giang<br>🛣️ Đà Nẵng - TP.HCM<br><a href="https://phuongthanhexpress.com/tuyen-xe" target="_blank">Xem chi tiết các tuyến</a>'
+            ],
+            [
+                'keywords' => ['cam kết chất lượng', 'chất lượng dịch vụ', 'cam kết'],
+                'answer' => 'Phương Thanh cam kết chất lượng dịch vụ: xe đời mới, vệ sinh sạch sẽ, tài xế an toàn, hỗ trợ khách hàng 24/7, hoàn tiền nếu không hài lòng.'
+            ],
+            [
+                'keywords' => ['phản hồi khách hàng', 'đánh giá khách hàng', 'feedback khách hàng'],
+                'answer' => 'Chúng tôi luôn lắng nghe và trân trọng mọi ý kiến đóng góp của khách hàng để ngày càng hoàn thiện dịch vụ. Bạn có thể gửi phản hồi qua hotline hoặc email.'
+            ],
+            [
+                'keywords' => ['dịch vụ đặc biệt', 'dịch vụ vip', 'dịch vụ cao cấp', 'dịch vụ riêng'],
+                'answer' => 'Phương Thanh có các dịch vụ VIP, xe phòng riêng, xe hợp đồng, trung chuyển tận nơi, gửi hàng nhanh, hỗ trợ khách đoàn, khách doanh nghiệp.'
+            ],
+            [
+                'keywords' => ['lý do nên chọn', 'tại sao chọn', 'ưu điểm', 'điểm mạnh', 'vì sao nên đi'],
+                'answer' => 'Lý do nên chọn Phương Thanh: xe mới, giá hợp lý, nhiều khung giờ, tài xế thân thiện, hỗ trợ 24/7, nhiều khuyến mãi, trung chuyển miễn phí, đặt vé online dễ dàng.'
+            ],
+            [
+                'keywords' => ['giải thưởng', 'thành tích', 'vinh danh', 'top nhà xe'],
+                'answer' => 'Phương Thanh nhiều năm liền đạt danh hiệu "Nhà xe được yêu thích nhất miền Trung" và nhiều giải thưởng về chất lượng dịch vụ.'
+            ],
+            [
+                'keywords' => ['đối tác', 'hợp tác', 'liên kết', 'đối tác chiến lược'],
+                'answer' => 'Chúng tôi hợp tác với nhiều đối tác lớn: các bến xe, khách sạn, công ty du lịch, trường đại học, doanh nghiệp vận tải... để phục vụ khách hàng tốt nhất.'
+            ],
+            [
+                'keywords' => ['chính sách khách hàng thân thiết', 'khách hàng thân thiết', 'tích điểm', 'ưu đãi thành viên'],
+                'answer' => 'Khách hàng thân thiết của Phương Thanh được tích điểm, nhận mã giảm giá, ưu đãi sinh nhật, ưu đãi nhóm, và nhiều quà tặng hấp dẫn.'
+            ],
+            [
+                'keywords' => ['giờ xuất bến', 'thời gian xuất bến', 'giờ chạy tuyến', 'giờ chạy xe', 'giờ xe chạy', 'giờ xuất phát', 'giờ khởi hành'],
+                'answer' => 'Các tuyến xe Phương Thanh xuất bến nhiều khung giờ trong ngày: 6h00, 10h00, 14h00, 20h00. Bạn vui lòng chọn tuyến và ngày đi để biết giờ xuất bến cụ thể hoặc liên hệ hotline để được tư vấn.'
+            ],
+            [
+                'keywords' => ['giá vé vip', 'giá vé thường', 'giá vé loại xe', 'giá vé từng loại', 'giá vé từng tuyến'],
+                'answer' => 'Giá vé xe giường nằm thường: 350.000đ - 450.000đ/tuyến. Giá vé xe VIP/phòng riêng: 500.000đ - 650.000đ/tuyến. Giá có thể thay đổi theo thời điểm, bạn vui lòng cung cấp tuyến và ngày đi để được báo giá chính xác.'
+            ],
+            [
+                'keywords' => ['chính sách đổi vé', 'chính sách trả vé', 'đổi vé', 'trả vé'],
+                'answer' => 'Chính sách đổi trả vé: Đổi vé miễn phí trước giờ xuất bến 2 tiếng. Trả vé trước 2 tiếng sẽ hoàn lại 80% giá vé. Sau thời gian này, vé không được hoàn/trả. Vui lòng liên hệ hotline để được hỗ trợ nhanh nhất.'
+            ],
+            [
+                'keywords' => ['điểm đón', 'điểm trả', 'đón khách', 'trả khách', 'đón ở đâu', 'trả ở đâu', 'điểm đón trả'],
+                'answer' => 'Các điểm đón/trả tại Đà Nẵng: Bến xe Trung tâm, BigC, cầu vượt Hòa Cầm, trung chuyển tận nơi nội thành. Tại Quảng Bình: Bến xe Đồng Hới, các điểm dọc QL1A, trung chuyển tận nơi TP Đồng Hới. Vui lòng cung cấp địa điểm cụ thể để được tư vấn.'
+            ],
+            [
+                'keywords' => ['hướng dẫn đặt vé', 'cách đặt vé', 'đặt vé online', 'đặt vé qua web', 'hướng dẫn mua vé'],
+                'answer' => 'Để đặt vé online xe khách Phương Thanh Express, bạn làm theo các bước sau:<br><br>1️⃣ <b>Truy cập website chính thức:</b> <a href="https://phuongthanhexpress.com/dat-ve" target="_blank">https://phuongthanhexpress.com/dat-ve</a><br>2️⃣ <b>Chọn tuyến đường, ngày đi, số lượng vé.</b><br>3️⃣ <b>Chọn ghế mong muốn.</b><br>4️⃣ <b>Nhập thông tin liên hệ (họ tên, số điện thoại).</b><br>5️⃣ <b>Chọn phương thức thanh toán (tiền mặt, chuyển khoản, ví điện tử, v.v.).</b><br>6️⃣ <b>Xác nhận đặt vé.</b><br>7️⃣ <b>Nhận mã vé qua SMS hoặc email.</b><br><br>Nếu cần hỗ trợ, gọi ngay hotline: <a href="tel:0905333333">0905.3333.33</a>'
+            ],
+            [
+                'keywords' => ['dịch vụ hợp đồng', 'thuê xe', 'xe hợp đồng', 'xe du lịch', 'thuê xe riêng'],
+                'answer' => 'Phương Thanh cung cấp dịch vụ xe hợp đồng, thuê xe du lịch, xe đưa đón sân bay, xe đi tour, xe cưới hỏi... Liên hệ hotline 0905.1111.11 để được báo giá và tư vấn chi tiết.'
+            ],
+            [
+                'keywords' => ['hỗ trợ khách đoàn', 'khách đoàn', 'doanh nghiệp', 'trường học', 'ưu đãi đoàn', 'đặt vé đoàn'],
+                'answer' => 'Nhà xe có chính sách ưu đãi đặc biệt cho khách đoàn, doanh nghiệp, trường học: giảm giá, trung chuyển tận nơi, xuất hóa đơn VAT, hợp đồng linh hoạt. Vui lòng liên hệ hotline để nhận báo giá tốt nhất.'
+            ],
+            [
+                'keywords' => ['ưu đãi tết', 'khuyến mãi tết', 'giá vé tết', 'ưu đãi hè', 'khuyến mãi hè', 'ưu đãi lễ', 'khuyến mãi lễ', 'ưu đãi sinh viên', 'giảm giá sinh viên'],
+                'answer' => 'Phương Thanh thường xuyên có các chương trình ưu đãi theo mùa: giảm giá vé Tết, hè, lễ hội, ưu đãi sinh viên, tặng quà, mã giảm giá... Theo dõi website hoặc fanpage để cập nhật thông tin mới nhất.'
+            ],
         ];
 
         foreach ($faq as $item) {
@@ -287,43 +643,66 @@ class ChatbotService
             }
         }
 
-        // Nếu không khớp từ khóa nào
+        // Nếu không khớp, gọi AI
         try {
-            // Gửi prompt lên DistributeAI Sync API
-            $apiKey = $this->apiKey;
-            $syncUrl = 'https://api.distribute.ai/v1/chat/completions';
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json',
-            ])->post($syncUrl, [
-                'model' => 'Llama-3.1 8B',
+                'anthropic-version' => '2023-06-01',
+                'content-type' => 'application/json',
+                'x-api-key' => $this->apiKey,
+            ])->post($this->baseUrl . '/messages', [
+                'model' => $this->model,
+                'max_tokens' => 1000,
                 'messages' => [
-                    ['role' => 'user', 'content' => $query]
+                    [
+                        'role' => 'user',
+                        'content' => $query
+                    ]
                 ]
             ]);
+
+            if (!$response->successful()) {
+                throw new \Exception('Anthropic API error: ' . $response->body());
+            }
+
             $data = $response->json();
-            if (isset($data['choices'][0]['message']['content'])) {
-                $result = $data['choices'][0]['message']['content'];
-                Log::info('Chatbot AI response', ['query' => $query, 'ai_response' => $result]);
+            $result = $data['content'][0]['text'] ?? '';
+
+            // Kiểm tra nếu AI trả lời không liên quan đến nhà xe
+            if ($this->isNotRelatedToBusCompany($result)) {
                 return [
                     'success' => true,
                     'data' => [
-                        'message' => nl2br($result)
+                        'message' => "Xin lỗi, tôi chỉ có thể hỗ trợ các thông tin liên quan đến dịch vụ của Phương Thanh Express. Vui lòng truy cập website hoặc liên hệ hotline 0905.999999 để được hỗ trợ thêm!"
                     ]
                 ];
-            } else {
-                Log::error('DistributeAI raw response', ['raw' => $response->body(), 'json' => $data]);
-                throw new \Exception('Không lấy được kết quả từ DistributeAI');
             }
-        } catch (\Exception $e) {
-            Log::error('DistributeAI Chatbot error', ['error' => $e->getMessage()]);
+
             return [
                 'success' => true,
                 'data' => [
-                    'message' => 'Xin lỗi, tôi chưa hiểu câu hỏi của bạn. Bạn có thể hỏi về giá vé, lịch trình, tiện nghi, khuyến mãi, gửi hàng... hoặc gọi hotline 0905.999999 để được hỗ trợ!'
+                    'message' => nl2br($result)
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => true,
+                'data' => [
+                    'message' => "Xin lỗi, tôi chưa hiểu câu hỏi của bạn. Bạn có thể hỏi về giá vé, lịch trình, tiện nghi, khuyến mãi, gửi hàng... hoặc gọi hotline 0905.999999 để được hỗ trợ!"
                 ]
             ];
         }
+    }
+
+    private function isNotRelatedToBusCompany($text)
+    {
+        $keywords = ['xe khách', 'phương thanh', 'đặt vé', 'lịch trình', 'giá vé', 'chuyến xe', 'vận tải', 'gửi hàng', 'hotline', 'nhà xe'];
+        foreach ($keywords as $kw) {
+            if (stripos($text, $kw) !== false) {
+                return false; // Có liên quan
+            }
+        }
+        return true; // Không liên quan
     }
 
     /**

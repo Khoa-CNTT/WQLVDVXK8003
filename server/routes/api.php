@@ -42,8 +42,12 @@ Route::prefix('v1')->group(function () {
     Route::get('trips/search', [TripController::class, 'search']);
     Route::get('trips/{id}', [TripController::class, 'show']);
 
-    // Chatbot
-    Route::post('chatbot/query', [ChatbotController::class, 'handleQuery']);
+    // Chatbot routes
+    Route::prefix('chatbot')->group(function () {
+        Route::post('query', [ChatbotController::class, 'handleQuery']);
+        Route::get('history', [ChatbotController::class, 'getHistory'])->middleware('auth:sanctum');
+        Route::delete('history', [ChatbotController::class, 'clearHistory'])->middleware('auth:sanctum');
+    });
 });
 
 // Route group cho các API yêu cầu xác thực
@@ -108,13 +112,6 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum','admin'])->group(function 
 
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'apiStats']);
-});
-
-// Chatbot routes
-Route::prefix('v1/chatbot')->group(function () {
-    Route::post('query', [ChatbotController::class, 'handleQuery']);
-    Route::get('history', [ChatbotController::class, 'getHistory'])->middleware('auth:sanctum');
-    Route::delete('history', [ChatbotController::class, 'clearHistory'])->middleware('auth:sanctum');
 });
 
 Route::post('/chat', [App\Http\Controllers\ChatbotController::class, 'chat']);

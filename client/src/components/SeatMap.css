@@ -1,0 +1,27 @@
+.seatmap-container { margin: 20px 0; }
+.seat-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.seat-btn {
+  width: 40px; height: 40px; border-radius: 8px; border: none;
+  font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.seat-btn.sold { background: #ccc; color: #888; cursor: not-allowed; }
+.seat-btn.available { background: #e0f2fe; color: #0369a1; }
+.seat-btn.selected { background: #fbbf24; color: #fff; }
+
+.seat-legend { margin: 12px 0; display: flex; gap: 16px; }
+.seat-legend-btn {
+  min-width: 70px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0 12px;
+  border: none;
+}
+.seat-legend-btn.sold { background: #ccc; color: #888; }
+.seat-legend-btn.available { background: #e0f2fe; color: #0369a1; }
+.seat-legend-btn.selected { background: #fbbf24; color: #fff; } 

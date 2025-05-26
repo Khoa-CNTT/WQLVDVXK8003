@@ -1,0 +1,34 @@
+.chatbot-quick-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 12px;
+  padding: 14px 16px 10px 16px;
+  margin-bottom: 10px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  justify-content: flex-start;
+}
+
+.quick-question-btn {
+  background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+  color: #fff;
+  border: 1.5px solid #fff;
+  border-radius: 22px;
+  padding: 10px 20px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.13);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.quick-question-btn:hover {
+  background: linear-gradient(90deg, #ea580c 0%, #f59e42 100%);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.22);
+  transform: translateY(-2px) scale(1.05);
+  border-color: #f59e42;
+} 

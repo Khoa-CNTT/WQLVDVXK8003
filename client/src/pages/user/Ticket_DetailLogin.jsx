@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import './Ticket_DetailLogin.css';
 import { useApi } from '../../hooks/useApi';
 import { formatTime } from '../../utils';
+import SeatMap from '../../components/SeatMap';
 
 const Ticket_Detail = () => {
   const location = useLocation();
@@ -222,6 +223,15 @@ const Ticket_Detail = () => {
     }
   }, [isAuthenticated, user]);
 
+  // Thêm log kiểm tra dữ liệu seats
+  console.log('seatData:', seatData);
+  const seats = seatData.map(seat => ({
+    id: seat.id,
+    code: seat.seat_number,
+    status: seat.booking_status === 'booked' ? 'sold' : 'available'
+  }));
+  const seatsPerRow = seatData.length > 20 ? 8 : 4;
+
   // If trip data is missing, show error
   if (!tripData) {
     return (
@@ -268,26 +278,7 @@ const Ticket_Detail = () => {
 
             {/* Sơ đồ chọn ghế */}
             <h3>Chọn ghế ngồi</h3>
-            <div className="seat-map">
-              {seatData.map((seat) => (
-                <div
-                  key={seat.id}
-                  className={`seat ${seat.status === 'taken' || seat.booking_status === 'booked'
-                    ? 'taken'
-                    : selectedSeats.includes(seat.id)
-                      ? 'selected'
-                      : 'available'
-                    }`}
-                  onClick={() =>
-                    seat.status !== 'taken' && seat.booking_status !== 'booked' &&
-                    toggleSeat(seat.id)
-                  }
-                  style={{ pointerEvents: seat.status === 'taken' || seat.booking_status === 'booked' ? 'none' : 'auto' }}
-                >
-                  {seat.seat_number}
-                </div>
-              ))}
-            </div>
+            <SeatMap seats={seats} seatsPerRow={seatsPerRow} onSelect={setSelectedSeats} />
             <p className="selected-seats">
               Ghế đã chọn: <span>{selectedSeats.length > 0 ? selectedSeats.join(', ') : 'Chưa chọn'}</span> ({selectedSeats.length})
             </p>
