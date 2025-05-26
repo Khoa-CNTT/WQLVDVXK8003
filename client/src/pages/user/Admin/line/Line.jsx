@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 import LineSchema from './LineSchema';
+import { confirmAction } from '../../../../utils';
 
 
 const Lines = () => {
@@ -90,18 +91,24 @@ const Lines = () => {
     }
   };
 
-  const handleDeleteLine = async (id) => {
-    if (window.confirm(`Bạn có chắc muốn xóa tuyến ID ${id}?`)) {
-      try {
-        await api.delete(`/admin/lines/${id}`);
-        alert('Xóa tuyến thành công');
-        const updatedLines = await fetchSortedData(api, '/admin/lines');
-        setLines(updatedLines);
-      } catch (error) {
-        alert('Lỗi khi xóa tuyến');
-      }
-    }
+  const handleDeleteLine = (id) => {
+    confirmAction({
+      title: 'Xác nhận xóa tài xế',
+      text: `Bạn có chắc muốn xóa tuyến ID ${id}?`,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/lines/${id}`);
+          toast.success('Xóa tuyến thành công');
+          const newData = await fetchSortedData(api, '/admin/lines');
+          setLines(newData);
+        } catch (error) {
+          toast.error('Lỗi khi xóa tuyến');
+        }
+      },
+    });
   };
+
+
 
   const handleEditLine = (line) => {
     setEditingLine(line);

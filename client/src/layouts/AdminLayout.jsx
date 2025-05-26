@@ -1,3 +1,4 @@
+import Swal from 'sweetalert2';
 import Sidebar from '../components/Sidebar/Sidebar';
 import { Storage } from '../constant/storage';
 
@@ -5,11 +6,22 @@ const HomeAdminLayout = ({ children }) => {
   const currentDateTime = new Date().toLocaleString();
   // Hàm đăng xuất
   const handleLogout = () => {
-    if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
-      localStorage.removeItem(Storage.AUTH_DATA);
-      localStorage.removeItem('userInfo');
-      window.location.href = '/';
-    }
+    Swal.fire({
+      title: 'Đăng xuất?',
+      text: 'Bạn có chắc muốn đăng xuất?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Đăng xuất',
+      cancelButtonText: 'Hủy',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem(Storage.AUTH_DATA);
+        localStorage.removeItem('userInfo');
+        window.location.href = '/';
+      }
+    });
   };
 
 

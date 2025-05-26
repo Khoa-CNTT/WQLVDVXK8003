@@ -8,6 +8,7 @@ import images from '../../data/sliderImages'
 import useImageSlider from '../../components/SliderCPN/useImageSlider';
 import FooterHome from '../../components/FooterHome/FooterHome';
 import Chatbot from '../../components/Chatbot/Chatbot';
+import Swal from 'sweetalert2';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -108,35 +109,48 @@ const Home = () => {
 
   // Hàm đăng xuất
   const handleLogout = () => {
-    try {
-      // Gọi hàm logout từ AuthContext
-      logout();
+    Swal.fire({
+      title: 'Đăng xuất?',
+      text: 'Bạn có chắc muốn đăng xuất?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Đăng xuất',
+      cancelButtonText: 'Hủy',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        try {
+          // Gọi hàm logout từ AuthContext
+          logout();
 
-      // Xóa tất cả dữ liệu người dùng khỏi localStorage
-      localStorage.removeItem('userInfo');
-      localStorage.removeItem(Storage.AUTH_DATA);
+          // Xóa tất cả dữ liệu người dùng khỏi localStorage
+          localStorage.removeItem('userInfo');
+          localStorage.removeItem(Storage.AUTH_DATA);
 
-      // Cập nhật state trong component
-      setIsLoggedIn(false);
-      setUserData(null);
+          // Cập nhật state trong component
+          setIsLoggedIn(false);
+          setUserData(null);
 
-      // Hiển thị thông báo
-      showNotification("Bạn đã đăng xuất thành công", "success");
+          // Hiển thị thông báo
+          showNotification("Bạn đã đăng xuất thành công", "success");
 
-      // Chuyển hướng người dùng
-      navigate('/?logout=true');
+          // Chuyển hướng người dùng
+          navigate('/?logout=true');
 
-      // Force reload page để đảm bảo tất cả state được reset
-      window.location.reload();
-    } catch (error) {
-      console.error("Lỗi khi đăng xuất:", error);
+          // Force reload page để đảm bảo tất cả state được reset
+          window.location.reload();
+        } catch (error) {
+          console.error("Lỗi khi đăng xuất:", error);
 
-      // Xử lý backup để đảm bảo user vẫn logout được
-      localStorage.clear(); // Xóa tất cả các item trong localStorage
-      setIsLoggedIn(false);
-      setUserData(null);
-      navigate('/');
-    }
+          // Xử lý backup để đảm bảo user vẫn logout được
+          localStorage.clear(); // Xóa tất cả các item trong localStorage
+          setIsLoggedIn(false);
+          setUserData(null);
+          navigate('/');
+        }
+      }
+    });
   };
 
   // Lấy tên người dùng từ thông tin đăng nhập
