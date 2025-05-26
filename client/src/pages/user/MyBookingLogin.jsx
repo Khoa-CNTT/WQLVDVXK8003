@@ -8,7 +8,7 @@ const MyBooking = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const api = useApi();
-  
+
   // Mặc định đặt isAuthenticated là false để hiển thị màn hình đăng nhập
   // Trong ứng dụng thực, bạn sẽ sử dụng useAuth() để lấy trạng thái đăng nhập
   // const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -21,6 +21,7 @@ const MyBooking = () => {
   const [currentBookingId, setCurrentBookingId] = useState(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [showModalQR, setShowModalQR] = useState(false);
 
   // Format date
   const formatDate = (date) => {
@@ -64,11 +65,11 @@ const MyBooking = () => {
     notification.className = `notification ${type}`;
     notification.textContent = message;
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
       notification.classList.add("show");
     }, 10);
-    
+
     setTimeout(() => {
       notification.classList.remove("show");
       setTimeout(() => {
@@ -125,15 +126,7 @@ const MyBooking = () => {
   };
 
   // Thêm hàm thanh toán VNPay
-  const handleVnpayPayment = async (bookingId) => {
-    try {
-      const res = await api.post('/payments/vnpay/create', { booking_id: bookingId });
-      const paymentUrl = res.data.data.payment_url;
-      window.location.href = paymentUrl;
-    } catch (err) {
-      showNotification('Có lỗi khi tạo thanh toán VNPay', 'error');
-    }
-  };
+ 
 
   // Load user bookings
   useEffect(() => {
@@ -165,10 +158,10 @@ const MyBooking = () => {
           <Link to="/home" className="back-link">Quay lại Trang Chủ</Link>
         </div>
       </header>
-      
+
       <section className="container">
         <h2>VÉ ĐÃ ĐẶT</h2>
-        
+
         {loading ? (
           <div className="loading">
             <p>Đang tải thông tin vé...</p>
@@ -192,8 +185,8 @@ const MyBooking = () => {
               // Format status
               let statusClass = "";
               let statusText = "";
-              
-              switch(booking.status) {
+
+              switch (booking.status) {
                 case "pending":
                   statusClass = "status-pending";
                   statusText = "Đang xử lý";
@@ -214,12 +207,12 @@ const MyBooking = () => {
                   statusClass = "status-default";
                   statusText = booking.status;
               }
-              
+
               // Format payment status
               let paymentStatusClass = "";
               let paymentStatusText = "";
-              
-              switch(booking.payment_status) {
+
+              switch (booking.payment_status) {
                 case "paid":
                   paymentStatusClass = "payment-paid";
                   paymentStatusText = "Đã thanh toán";
@@ -236,64 +229,59 @@ const MyBooking = () => {
                   paymentStatusClass = "payment-default";
                   paymentStatusText = booking.payment_status || "Chưa thanh toán";
               }
-              
+
               return (
-                <div className="booking-card" key={booking.id}>
-                  <div className="booking-header">
-                    <h3>
-                      {booking.trip?.route?.departure || 'Đà Nẵng'} → {booking.trip?.route?.destination || 'Quảng Bình'}
-                    </h3>
-                    <div className="booking-statuses">
-                      <span className={`status-badge ${statusClass}`}>{statusText}</span>
-                      <span className={`status-badge ${paymentStatusClass}`}>{paymentStatusText}</span>
+                <>
+                  <div className="booking-card" key={booking.id}>
+                    <div className="booking-header">
+                      <h3>
+                        {booking.trip?.route?.departure || 'Đà Nẵng'} → {booking.trip?.route?.destination || 'Quảng Bình'}
+                      </h3>
+                      <div className="booking-statuses">
+                        <span className={`status-badge ${statusClass}`}>{statusText}</span>
+                        <span className={`status-badge ${paymentStatusClass}`}>{paymentStatusText}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="booking-details">
-                    <div className="booking-info">
-                      <p><strong>Mã đặt vé:</strong> {booking.booking_code || 'PTX' + Math.floor(Math.random() * 1000000)}</p>
-                      <p><strong>Ngày đặt:</strong> {formatDate(booking.created_at || new Date())}</p>
-                      <p><strong>Loại xe:</strong> {booking.trip?.vehicle?.type || 'Limousine'}</p>
-                      <p><strong>Giờ khởi hành:</strong> {formatTime(booking.trip?.departure_time || new Date())}</p>
+                    <div className="booking-details">
+                      <div className="booking-info">
+                        <p><strong>Mã đặt vé:</strong> {booking.booking_code || 'PTX' + Math.floor(Math.random() * 1000000)}</p>
+                        <p><strong>Ngày đặt:</strong> {formatDate(booking.created_at || new Date())}</p>
+                        <p><strong>Loại xe:</strong> {booking.trip?.vehicle?.type || 'Limousine'}</p>
+                        <p><strong>Giờ khởi hành:</strong> {formatTime(booking.trip?.departure_time || new Date())}</p>
+                      </div>
+                      <div className="booking-info">
+                        <p><strong>Số ghế:</strong> {booking.seat_count || booking.selectedSeats?.length || booking.tickets?.length || 1}</p>
+                        <p><strong>Ghế:</strong> {booking.selectedSeats?.join(', ') || booking.tickets?.map(t => t.seat?.seat_number).join(', ') || '1, 2'}</p>
+                        <p><strong>Giá vé:</strong> {formatCurrency(booking.total_price || 300000)}</p>
+                        <p><strong>Phương thức thanh toán:</strong> {booking.payment_method === 'vnpay' ? 'VNPAY' : booking.payment_method === 'momo' ? 'MoMo' : 'Tiền mặt'}</p>
+                      </div>
                     </div>
-                    <div className="booking-info">
-                      <p><strong>Số ghế:</strong> {booking.seat_count || booking.selectedSeats?.length || booking.tickets?.length || 1}</p>
-                      <p><strong>Ghế:</strong> {booking.selectedSeats?.join(', ') || booking.tickets?.map(t => t.seat?.seat_number).join(', ') || '1, 2'}</p>
-                      <p><strong>Giá vé:</strong> {formatCurrency(booking.total_price || 300000)}</p>
-                      <p><strong>Phương thức thanh toán:</strong> {booking.payment_method === 'vnpay' ? 'VNPAY' : booking.payment_method === 'momo' ? 'MoMo' : 'Tiền mặt'}</p>
-                    </div>
-                  </div>
-                  <div className="booking-footer">
-                    <div className="passenger-info">
-                      <p><strong>Hành khách:</strong> {booking.passenger_name || booking.name || 'Nguyễn Văn A'}</p>
-                      <p><strong>Số điện thoại:</strong> {booking.passenger_phone || booking.phone || '0123456789'}</p>
-                    </div>
-                    <div className="booking-actions">
-                      <button 
-                        onClick={() => handleShowTicketModal(booking)} 
-                        className="view-ticket-btn"
-                      >
-                        Xem vé
-                      </button>
-                      {booking.status !== 'cancelled' && booking.status !== 'completed' && (
-                        <button 
-                          onClick={() => handleShowCancelModal(booking.id)} 
-                          className="cancel-btn"
+                    <div className="booking-footer">
+                      <div className="passenger-info">
+                        <p><strong>Hành khách:</strong> {booking.passenger_name || booking.name || 'Nguyễn Văn A'}</p>
+                        <p><strong>Số điện thoại:</strong> {booking.passenger_phone || booking.phone || '0123456789'}</p>
+                      </div>
+                      <div className="booking-actions">
+                        <button
+                          onClick={() => handleShowTicketModal(booking)}
+                          className="view-ticket-btn"
                         >
-                          Hủy vé
+                          Xem vé
                         </button>
-                      )}
-                      {/* Nút thanh toán VNPay */}
-                      {booking.payment_status !== 'paid' && booking.status !== 'cancelled' && (
-                        <button 
-                          onClick={() => handleVnpayPayment(booking.id)} 
-                          className="pay-btn"
-                        >
-                          Thanh toán VNPay
-                        </button>
-                      )}
+                        {/* Nút thanh toán VNPay */}
+                        {/* {booking.payment_status !== 'paid' && booking.status !== 'cancelled' && (
+                          <Button
+                            onClick={() => handleVnpayPayment(booking)}
+                            variant="contained" color="primary"
+                          >
+                            Thanh toán VNPay
+                          </Button>
+                        )} */}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </>
+
               );
             })}
           </div>
@@ -332,7 +320,7 @@ const MyBooking = () => {
                     <p>E-TICKET</p>
                   </div>
                 </div>
-                
+
                 <div className="ticket-body">
                   <div className="ticket-route">
                     <div className="route-from">
@@ -410,7 +398,7 @@ const MyBooking = () => {
                     <p>Hotline hỗ trợ: 0905.999999</p>
                   </div>
                 </div>
-                
+
                 <div className="ticket-footer">
                   <div className="ticket-status">
                     <span className={selectedBooking.status === 'cancelled' ? 'cancelled' : (selectedBooking.payment_status === 'paid' ? 'paid' : 'pending')}>
